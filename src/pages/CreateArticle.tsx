@@ -87,9 +87,28 @@ export default function CreateArticlePage() {
     },
   });
 
-  const handleSubmit = async (data: unknown) => {
+  const handleSubmit = async (formData: {
+    title: string;
+    slug: string;
+    excerpt: string;
+    body: string;
+    heroImage: { id: number; url: string } | null;
+    publishDate: string;
+    isPremium: boolean;
+    readingTime: number | null;
+    author: number | null;
+    tags: number[];
+    partners: number[];
+    seo: {
+      metaTitle?: string;
+      metaDescription?: string;
+      keywords?: string;
+      metaImage?: { id: number; url: string } | null;
+      preventIndexing?: boolean;
+    } | null;
+  }) => {
     setError('');
-    await mutation.mutateAsync(data);
+    await mutation.mutateAsync(formData);
   };
 
   return (

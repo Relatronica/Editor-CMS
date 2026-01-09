@@ -5,18 +5,77 @@ import ArticleForm from '../components/forms/ArticleForm';
 import { ArrowLeft, AlertCircle, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 
+interface SEOData {
+  metaTitle?: string;
+  metaDescription?: string;
+  keywords?: string;
+  metaImage?: { id: number; url: string } | null;
+  preventIndexing?: boolean;
+}
+
+interface ArticleFormData {
+  title: string;
+  slug: string;
+  excerpt: string;
+  body: string;
+  heroImage: { id: number; url: string } | null;
+  publishDate: string;
+  isPremium: boolean;
+  readingTime: number | null;
+  author: number | null;
+  tags: number[];
+  partners: number[];
+  seo: SEOData | null;
+}
+
+// Support both Strapi v4 (with attributes) and v5 (direct fields)
+interface ArticleData {
+  id: number;
+  documentId?: string;
+  title?: string;
+  slug?: string;
+  excerpt?: string;
+  body?: string;
+  heroImage?: any;
+  publishDate?: string;
+  isPremium?: boolean;
+  readingTime?: number | null;
+  author?: { data?: { id: number } } | number | null;
+  tags?: { data?: Array<{ id: number }> } | number[];
+  partners?: { data?: Array<{ id: number }> } | number[];
+  seo?: SEOData & {
+    metaImage?: { data?: { id: number; attributes?: { url?: string } } } | { id: number; url: string } | null;
+  } | null;
+  attributes?: Partial<
+    ArticleFormData & {
+      author?: { data?: { id: number } };
+      tags?: { data?: Array<{ id: number }> };
+      partners?: { data?: Array<{ id: number }> };
+      heroImage?: { data?: { id: number; attributes?: { url?: string } } };
+      seo?: SEOData & {
+        metaImage?: { data?: { id: number; attributes?: { url?: string } } };
+      };
+    }
+  >;
+}
+
+interface ArticleResponse {
+  data: ArticleData;
+  meta?: any;
+}
+
 export default function EditArticlePage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [error, setError] = useState('');
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading } = useQuery<ArticleResponse>({
     queryKey: ['articles', id],
     queryFn: () =>
-      apiClient.findOne('articles', id!, {
+      apiClient.findOne<ArticleData>('articles', id!, {
         populate: ['heroImage', 'author', 'tags', 'partners', 'seo.metaImage'],
-      }),
+      }) as Promise<ArticleResponse>,
     enabled: !!id,
   });
 
@@ -100,9 +159,9 @@ export default function EditArticlePage() {
     },
   });
 
-  const handleSubmit = async (data: unknown) => {
+  const handleSubmit = async (formData: ArticleFormData) => {
     setError('');
-    await mutation.mutateAsync(data);
+    await mutation.mutateAsync(formData);
   };
 
   if (isLoading) {
@@ -157,7 +216,39 @@ export default function EditArticlePage() {
 
       <div className="card">
         <ArticleForm
-          initialData={data.data}
+          initialData={
+            data.data.attributes
+              ? (data.data as { id: number; attributes: Partial<ArticleFormData & { author?: { data?: { id: number } }; tags?: { data?: Array<{ id: number }> }; partners?: { data?: Array<{ id: number }> }; heroImage?: { data?: { id: number; attributes?: { url?: string } } }; seo?: SEOData & { metaImage?: { data?: { id: number; attributes?: { url?: string } } } }; }> })
+              : {
+                  id: data.data.id,
+                  attributes: {
+                    title: data.data.title,
+                    slug: data.data.slug,
+                    excerpt: data.data.excerpt,
+                    body: data.data.body,
+                    heroImage: data.data.heroImage,
+                    publishDate: data.data.publishDate,
+                    isPremium: data.data.isPremium,
+                    readingTime: data.data.readingTime,
+                    author: typeof data.data.author === 'object' && data.data.author && 'data' in data.data.author && data.data.author.data
+                      ? { data: { id: (data.data.author as { data: { id: number } }).data.id } }
+                      : typeof data.data.author === 'number'
+                      ? { data: { id: data.data.author } }
+                      : undefined,
+                    tags: Array.isArray(data.data.tags) && data.data.tags.length > 0 && typeof data.data.tags[0] === 'object'
+                      ? { data: (data.data.tags as unknown as Array<{ id: number }>).map(t => ({ id: t.id })) }
+                      : Array.isArray(data.data.tags) && data.data.tags.length > 0 && typeof data.data.tags[0] === 'number'
+                      ? { data: (data.data.tags as number[]).map(id => ({ id })) }
+                      : undefined,
+                    partners: Array.isArray(data.data.partners) && data.data.partners.length > 0 && typeof data.data.partners[0] === 'object'
+                      ? { data: (data.data.partners as unknown as Array<{ id: number }>).map(p => ({ id: p.id })) }
+                      : Array.isArray(data.data.partners) && data.data.partners.length > 0 && typeof data.data.partners[0] === 'number'
+                      ? { data: (data.data.partners as number[]).map(id => ({ id })) }
+                      : undefined,
+                    seo: data.data.seo,
+                  },
+                } as { id: number; attributes: Partial<ArticleFormData & { author?: { data?: { id: number } }; tags?: { data?: Array<{ id: number }> }; partners?: { data?: Array<{ id: number }> }; heroImage?: { data?: { id: number; attributes?: { url?: string } } }; seo?: SEOData & { metaImage?: { data?: { id: number; attributes?: { url?: string } } } }; }> }
+          }
           onSubmit={handleSubmit}
           isSubmitting={mutation.isPending}
         />

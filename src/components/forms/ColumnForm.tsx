@@ -81,9 +81,10 @@ export default function ColumnForm({
   useEffect(() => {
     if (authorsError) {
       console.error('❌ Error loading authors:', authorsError);
-      if ('response' in authorsError && authorsError.response) {
-        console.error('Response status:', authorsError.response.status);
-        console.error('Response data:', authorsError.response.data);
+      if ('response' in authorsError && authorsError.response && typeof authorsError.response === 'object') {
+        const response = authorsError.response as { status?: number; data?: unknown };
+        console.error('Response status:', response.status);
+        console.error('Response data:', response.data);
       }
     }
     if (authorsData) {
@@ -105,22 +106,33 @@ export default function ColumnForm({
         title: attrs.title || '',
         slug: attrs.slug || '',
         description: attrs.description || '',
-        cover:
-          attrs.cover?.data && typeof attrs.cover.data === 'object'
-            ? {
-                id: 'id' in attrs.cover.data ? attrs.cover.data.id : 0,
-                url:
-                  'attributes' in attrs.cover.data &&
-                  attrs.cover.data.attributes &&
-                  typeof attrs.cover.data.attributes === 'object' &&
-                  'url' in attrs.cover.data.attributes &&
-                  typeof attrs.cover.data.attributes.url === 'string'
-                    ? attrs.cover.data.attributes.url.startsWith('http')
-                      ? attrs.cover.data.attributes.url
-                      : `${import.meta.env.VITE_STRAPI_URL}${attrs.cover.data.attributes.url}`
-                    : '',
-              }
-            : null,
+        cover: (() => {
+          const coverValue = attrs.cover;
+          if (!coverValue) return null;
+          
+          // Handle direct format: { id: number; url: string }
+          if ('id' in coverValue && 'url' in coverValue && typeof coverValue.id === 'number' && typeof coverValue.url === 'string') {
+            return {
+              id: coverValue.id,
+              url: coverValue.url.startsWith('http') ? coverValue.url : `${import.meta.env.VITE_STRAPI_URL}${coverValue.url}`,
+            };
+          }
+          
+          // Handle Strapi v4 format: { data?: { id: number; attributes?: { url?: string } } }
+          if ('data' in coverValue && coverValue.data && typeof coverValue.data === 'object') {
+            const coverData = coverValue.data as { id?: number; attributes?: { url?: string } };
+            const coverId = coverData.id ?? 0;
+            const coverUrl = coverData.attributes?.url;
+            if (coverUrl && typeof coverUrl === 'string') {
+              return {
+                id: coverId,
+                url: coverUrl.startsWith('http') ? coverUrl : `${import.meta.env.VITE_STRAPI_URL}${coverUrl}`,
+              };
+            }
+          }
+          
+          return null;
+        })(),
         author: attrs.author?.data?.id || null,
         links: Array.isArray(attrs.links)
           ? attrs.links.map((link: any) => ({
@@ -195,8 +207,9 @@ export default function ColumnForm({
     const options = authorsData.data
       .map((author, index) => {
         // Handle different possible structures
-        const authorId = author?.id ?? author?.documentId;
-        const authorAttributes = author?.attributes ?? author;
+        const authorWithId = author as { id?: number; documentId?: string; attributes?: { name?: string; avatar?: any } };
+        const authorId = authorWithId?.id ?? authorWithId?.documentId;
+        const authorAttributes = authorWithId?.attributes ?? author;
         
         if (!authorId) {
           console.log(`⚠️ Author at index ${index} has no ID:`, author);
@@ -208,16 +221,17 @@ export default function ColumnForm({
           return null;
         }
 
-        const authorName = authorAttributes?.name;
+        const authorName = (authorAttributes as { name?: string })?.name;
         if (!authorName) {
           console.log(`⚠️ Author at index ${index} has no name:`, author);
           // Still include it but with a fallback label
         }
 
-        const avatarData = authorAttributes?.avatar;
-        const avatarUrl = avatarData?.data?.attributes?.url 
-          ?? avatarData?.attributes?.url 
-          ?? avatarData?.url
+        const avatarData = (authorAttributes as { avatar?: any })?.avatar;
+        const avatarWithData = avatarData as { data?: { attributes?: { url?: string } }; attributes?: { url?: string }; url?: string } | undefined;
+        const avatarUrl = avatarWithData?.data?.attributes?.url 
+          ?? avatarWithData?.attributes?.url 
+          ?? avatarWithData?.url
           ?? null;
         
         const fullAvatarUrl = avatarUrl 

@@ -14,7 +14,6 @@ export default function RichTextEditor({
   value,
   onChange,
   label,
-  placeholder = 'Inizia a scrivere...',
 }: RichTextEditorProps) {
   const editor = useEditor({
     extensions: [

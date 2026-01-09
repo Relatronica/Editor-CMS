@@ -106,9 +106,10 @@ export default function ArticleForm({
   useEffect(() => {
     if (authorsError) {
       console.error('❌ Error loading authors:', authorsError);
-      if ('response' in authorsError && authorsError.response) {
-        console.error('Response status:', authorsError.response.status);
-        console.error('Response data:', authorsError.response.data);
+      if ('response' in authorsError && authorsError.response && typeof authorsError.response === 'object') {
+        const response = authorsError.response as { status?: number; data?: unknown };
+        console.error('Response status:', response.status);
+        console.error('Response data:', response.data);
       }
     }
     if (authorsData) {
@@ -220,8 +221,9 @@ export default function ArticleForm({
     const options = authorsData.data
       .map((author, index) => {
         // Handle different possible structures
-        const authorId = author?.id ?? author?.documentId;
-        const authorAttributes = author?.attributes ?? author;
+        const authorWithId = author as { id?: number; documentId?: string; attributes?: { name?: string; avatar?: any } };
+        const authorId = authorWithId?.id ?? authorWithId?.documentId;
+        const authorAttributes = authorWithId?.attributes ?? author;
         
         if (!authorId) {
           console.log(`⚠️ Author at index ${index} has no ID:`, author);
@@ -233,16 +235,17 @@ export default function ArticleForm({
           return null;
         }
 
-        const authorName = authorAttributes?.name;
+        const authorName = (authorAttributes as { name?: string })?.name;
         if (!authorName) {
           console.log(`⚠️ Author at index ${index} has no name:`, author);
           // Still include it but with a fallback label
         }
 
-        const avatarData = authorAttributes?.avatar;
-        const avatarUrl = avatarData?.data?.attributes?.url 
-          ?? avatarData?.attributes?.url 
-          ?? avatarData?.url
+        const avatarData = (authorAttributes as { avatar?: any })?.avatar;
+        const avatarWithData = avatarData as { data?: { attributes?: { url?: string } }; attributes?: { url?: string }; url?: string } | undefined;
+        const avatarUrl = avatarWithData?.data?.attributes?.url 
+          ?? avatarWithData?.attributes?.url 
+          ?? avatarWithData?.url
           ?? null;
         
         const fullAvatarUrl = avatarUrl 

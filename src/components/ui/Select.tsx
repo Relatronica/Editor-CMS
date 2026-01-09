@@ -89,7 +89,6 @@ export default function Select({
           setIsOpen(!isOpen);
         }}
         className="input w-full text-left flex items-center justify-between cursor-pointer"
-        required={required}
       >
         <div className="flex items-center gap-2 min-w-0 flex-1">
           {selectedOption ? (

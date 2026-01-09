@@ -54,9 +54,16 @@ export default function CreateColumnPage() {
     },
   });
 
-  const handleSubmit = async (data: unknown) => {
+  const handleSubmit = async (formData: {
+    title: string;
+    slug: string;
+    description: string;
+    cover: { id: number; url: string } | null;
+    author: number | null;
+    links: Array<{ label: string; url: string; description?: string; publishDate?: string }>;
+  }) => {
     setError('');
-    await mutation.mutateAsync(data);
+    await mutation.mutateAsync(formData);
   };
 
   return (
