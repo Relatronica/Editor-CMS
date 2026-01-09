@@ -6,6 +6,9 @@ import Select from '../ui/Select';
 import MultiSelect from '../ui/MultiSelect';
 import RichTextEditor from '../editors/RichTextEditor';
 import { Loader2 } from 'lucide-react';
+import { useTutorial } from '../../hooks/useTutorial';
+import TutorialTour from '../TutorialTour';
+import { Step } from 'react-joyride';
 
 interface SEOData {
   metaTitle?: string;
@@ -54,6 +57,8 @@ export default function ArticleForm({
   onSubmit,
   isSubmitting = false,
 }: ArticleFormProps) {
+  const { isRunning, completeTutorial, stopTutorial } = useTutorial('article-form');
+  
   const [formData, setFormData] = useState<ArticleFormData>({
     title: '',
     slug: '',
@@ -68,6 +73,153 @@ export default function ArticleForm({
     partners: [],
     seo: null,
   });
+
+  const articleFormSteps: Step[] = [
+    {
+      target: '[data-tour="article-title"]',
+      content: (
+        <div>
+          <h3 className="text-lg font-semibold mb-2">Titolo dell'articolo</h3>
+          <p className="text-sm text-gray-600 mb-2">
+            Il titolo è obbligatorio e viene visualizzato come intestazione principale dell'articolo.
+            <strong className="block mt-1">💡 Suggerimento:</strong> Quando inserisci il titolo, lo slug viene generato automaticamente in base al titolo.
+          </p>
+        </div>
+      ),
+      placement: 'bottom',
+    },
+    {
+      target: '[data-tour="article-slug"]',
+      content: (
+        <div>
+          <h3 className="text-lg font-semibold mb-2">Slug (URL)</h3>
+          <p className="text-sm text-gray-600 mb-2">
+            Lo slug è l'URL dell'articolo (es: "mio-articolo"). Viene generato automaticamente dal titolo,
+            ma puoi modificarlo manualmente se necessario.
+          </p>
+          <p className="text-sm text-gray-500 italic">
+            Importante: usa solo lettere minuscole, numeri e trattini.
+          </p>
+        </div>
+      ),
+      placement: 'bottom',
+    },
+    {
+      target: '[data-tour="article-excerpt"]',
+      content: (
+        <div>
+          <h3 className="text-lg font-semibold mb-2">Estratto</h3>
+          <p className="text-sm text-gray-600 mb-2">
+            L'estratto è una breve descrizione dell'articolo (max 300 caratteri).
+            Viene utilizzato come anteprima nelle liste di articoli e nelle meta description SEO.
+          </p>
+        </div>
+      ),
+      placement: 'bottom',
+    },
+    {
+      target: '[data-tour="article-body"]',
+      content: (
+        <div>
+          <h3 className="text-lg font-semibold mb-2">Editor Rich Text</h3>
+          <p className="text-sm text-gray-600 mb-2">
+            Questo è l'editor per il contenuto principale dell'articolo. La toolbar ti permette di:
+          </p>
+          <ul className="text-sm text-gray-600 list-disc list-inside mb-2 space-y-1">
+            <li><strong>Grassetto</strong> e <em>Corsivo</em></li>
+            <li>Liste puntate e numerate</li>
+            <li>Collegamenti (link)</li>
+            <li>Intestazioni (H2, H3)</li>
+          </ul>
+          <p className="text-sm text-gray-500 italic">
+            Il contenuto è obbligatorio e supporta Markdown.
+          </p>
+        </div>
+      ),
+      placement: 'top',
+    },
+    {
+      target: '[data-tour="article-hero-image"]',
+      content: (
+        <div>
+          <h3 className="text-lg font-semibold mb-2">Immagine Hero</h3>
+          <p className="text-sm text-gray-600 mb-2">
+            L'immagine hero è l'immagine principale dell'articolo, visualizzata in evidenza.
+            Puoi caricare un'immagine dal tuo computer o selezionarne una già presente nel sistema.
+          </p>
+          <p className="text-sm text-gray-500 italic">
+            Consiglio: usa immagini di alta qualità in formato ottimizzato (WebP o JPG).
+          </p>
+        </div>
+      ),
+      placement: 'top',
+    },
+    {
+      target: '[data-tour="article-author"]',
+      content: (
+        <div>
+          <h3 className="text-lg font-semibold mb-2">Autore</h3>
+          <p className="text-sm text-gray-600 mb-2">
+            Seleziona l'autore dell'articolo dalla lista. Gli autori devono essere creati prima
+            di poter essere assegnati agli articoli.
+          </p>
+        </div>
+      ),
+      placement: 'top',
+    },
+    {
+      target: '[data-tour="article-tags"]',
+      content: (
+        <div>
+          <h3 className="text-lg font-semibold mb-2">Tag</h3>
+          <p className="text-sm text-gray-600 mb-2">
+            I tag aiutano a categorizzare e organizzare gli articoli. Puoi selezionare più tag
+            per classificare il contenuto per argomento, tema o categoria.
+          </p>
+        </div>
+      ),
+      placement: 'top',
+    },
+    {
+      target: '[data-tour="article-metadata"]',
+      content: (
+        <div>
+          <h3 className="text-lg font-semibold mb-2">Metadata e Pubblicazione</h3>
+          <p className="text-sm text-gray-600 mb-2">
+            Qui puoi impostare:
+          </p>
+          <ul className="text-sm text-gray-600 list-disc list-inside mb-2 space-y-1">
+            <li><strong>Data di pubblicazione:</strong> quando l'articolo verrà pubblicato</li>
+            <li><strong>Contenuto Premium:</strong> marca l'articolo come contenuto premium (a pagamento)</li>
+            <li><strong>Tempo di lettura:</strong> stima in minuti (aiuta gli utenti)</li>
+          </ul>
+        </div>
+      ),
+      placement: 'top',
+    },
+    {
+      target: '[data-tour="article-seo"]',
+      content: (
+        <div>
+          <h3 className="text-lg font-semibold mb-2">Ottimizzazione SEO</h3>
+          <p className="text-sm text-gray-600 mb-2">
+            La sezione SEO è fondamentale per la visibilità sui motori di ricerca:
+          </p>
+          <ul className="text-sm text-gray-600 list-disc list-inside mb-2 space-y-1">
+            <li><strong>Meta Title:</strong> titolo per i motori (max 60 caratteri)</li>
+            <li><strong>Meta Description:</strong> descrizione per i risultati di ricerca (max 160 caratteri)</li>
+            <li><strong>Keywords:</strong> parole chiave separate da virgole</li>
+            <li><strong>Meta Image:</strong> immagine per condivisioni social (Open Graph)</li>
+            <li><strong>Prevent Indexing:</strong> impedisci ai motori di indicizzare questa pagina</li>
+          </ul>
+          <p className="text-sm text-gray-500 italic mt-2">
+            💡 Suggerimento: se lasci vuoto, il sistema userà titolo ed estratto come default.
+          </p>
+        </div>
+      ),
+      placement: 'top',
+    },
+  ];
 
   // Load authors, tags, partners
   const { data: authorsData, error: authorsError, isLoading: authorsLoading } = useQuery({
@@ -288,25 +440,33 @@ export default function ArticleForm({
       })) || [];
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Title */}
-      <div>
-        <label htmlFor="title" className="label">
-          Titolo <span className="text-red-500">*</span>
-        </label>
-        <input
-          id="title"
-          type="text"
-          value={formData.title}
-          onChange={(e) => handleTitleChange(e.target.value)}
-          className="input"
-          required
-          placeholder="Titolo dell'articolo"
-        />
-      </div>
+    <>
+      <TutorialTour
+        steps={articleFormSteps}
+        isRunning={isRunning}
+        onComplete={completeTutorial}
+        onSkip={stopTutorial}
+      />
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Title */}
+        <div data-tour="article-title">
+          <label htmlFor="title" className="label">
+            Titolo <span className="text-red-500">*</span>
+          </label>
+          <input
+            id="title"
+            type="text"
+            value={formData.title}
+            onChange={(e) => handleTitleChange(e.target.value)}
+            className="input"
+            required
+            placeholder="Titolo dell'articolo"
+          />
+        </div>
 
       {/* Slug */}
-      <div>
+      <div data-tour="article-slug">
         <label htmlFor="slug" className="label">
           Slug <span className="text-red-500">*</span>
         </label>
@@ -330,7 +490,7 @@ export default function ArticleForm({
       </div>
 
       {/* Excerpt */}
-      <div>
+      <div data-tour="article-excerpt">
         <label htmlFor="excerpt" className="label">
           Estratto
         </label>
@@ -351,52 +511,62 @@ export default function ArticleForm({
       </div>
 
       {/* Body */}
-      <RichTextEditor
-        label="Contenuto"
-        value={formData.body}
-        onChange={(body) => setFormData((prev) => ({ ...prev, body }))}
-        placeholder="Inizia a scrivere il contenuto dell'articolo..."
-      />
+      <div data-tour="article-body">
+        <RichTextEditor
+          label="Contenuto"
+          value={formData.body}
+          onChange={(body) => setFormData((prev) => ({ ...prev, body }))}
+          placeholder="Inizia a scrivere il contenuto dell'articolo..."
+        />
+      </div>
 
       {/* Hero Image */}
-      <ImageUpload
-        label="Immagine Hero"
-        value={formData.heroImage}
-        onChange={(heroImage) =>
-          setFormData((prev) => ({ ...prev, heroImage }))
-        }
-      />
+      <div data-tour="article-hero-image">
+        <ImageUpload
+          label="Immagine Hero"
+          value={formData.heroImage}
+          onChange={(heroImage) =>
+            setFormData((prev) => ({ ...prev, heroImage }))
+          }
+        />
+      </div>
 
       {/* Author */}
-      <Select
-        label="Autore"
-        value={formData.author}
-        onChange={(author) =>
-          setFormData((prev) => ({ ...prev, author: author as number }))
-        }
-        options={authorOptions}
-        placeholder="Seleziona un autore..."
-      />
+      <div data-tour="article-author">
+        <Select
+          label="Autore"
+          value={formData.author}
+          onChange={(author) =>
+            setFormData((prev) => ({ ...prev, author: author as number }))
+          }
+          options={authorOptions}
+          placeholder="Seleziona un autore..."
+        />
+      </div>
 
       {/* Tags */}
-      <MultiSelect
-        label="Tag"
-        value={formData.tags}
-        onChange={(tags) => setFormData((prev) => ({ ...prev, tags }))}
-        options={tagOptions}
-        placeholder="Seleziona tag..."
-      />
+      <div data-tour="article-tags">
+        <MultiSelect
+          label="Tag"
+          value={formData.tags}
+          onChange={(tags) => setFormData((prev) => ({ ...prev, tags }))}
+          options={tagOptions}
+          placeholder="Seleziona tag..."
+        />
+      </div>
 
       {/* Partners */}
-      <MultiSelect
-        label="Partner"
-        value={formData.partners}
-        onChange={(partners) =>
-          setFormData((prev) => ({ ...prev, partners }))
-        }
-        options={partnerOptions}
-        placeholder="Seleziona partner..."
-      />
+      <div>
+        <MultiSelect
+          label="Partner"
+          value={formData.partners}
+          onChange={(partners) =>
+            setFormData((prev) => ({ ...prev, partners }))
+          }
+          options={partnerOptions}
+          placeholder="Seleziona partner..."
+        />
+      </div>
 
       {/* Publish Date */}
       <div>
@@ -415,7 +585,7 @@ export default function ArticleForm({
       </div>
 
       {/* Premium & Reading Time */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4" data-tour="article-metadata">
         <div>
           <label className="flex items-center space-x-2">
             <input
@@ -452,7 +622,7 @@ export default function ArticleForm({
       </div>
 
       {/* SEO Section */}
-      <div className="border-t border-gray-200 pt-6">
+      <div className="border-t border-gray-200 pt-6" data-tour="article-seo">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">SEO</h3>
 
         <div className="space-y-4">
@@ -580,5 +750,6 @@ export default function ArticleForm({
         </button>
       </div>
     </form>
+    </>
   );
 }

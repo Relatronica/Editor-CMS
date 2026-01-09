@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { LogOut } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
+import HelpButton from './HelpButton';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -39,6 +40,7 @@ export default function Layout({ children }: LayoutProps) {
             </Link>
 
             <div className="flex items-center space-x-4">
+              <HelpButton />
               {!import.meta.env.VITE_API_TOKEN && (
                 <button
                   onClick={handleLogout}

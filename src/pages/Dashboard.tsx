@@ -4,6 +4,9 @@ import { apiClient } from '../lib/api';
 import { FileText, Columns, Clock, CheckCircle2, Edit, Link as LinkIcon, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
+import { useTutorial } from '../hooks/useTutorial';
+import TutorialTour from '../components/TutorialTour';
+import { Step } from 'react-joyride';
 
 interface ContentItem {
   id: number;
@@ -16,6 +19,8 @@ interface ContentItem {
 }
 
 export default function DashboardPage() {
+  const { isRunning, completeTutorial, stopTutorial } = useTutorial('dashboard');
+
   const { data: articles, isLoading: articlesLoading } = useQuery({
     queryKey: ['articles', 'recent'],
     queryFn: () =>
@@ -38,6 +43,73 @@ export default function DashboardPage() {
 
   const isLoading = articlesLoading || columnsLoading;
 
+  const dashboardSteps: Step[] = [
+    {
+      target: 'body',
+      content: (
+        <div>
+          <h3 className="text-lg font-semibold mb-2">Benvenuto nella Dashboard! 👋</h3>
+          <p className="text-sm text-gray-600 mb-2">
+            Questa è la tua area di controllo principale per gestire tutti i contenuti.
+          </p>
+          <p className="text-sm text-gray-600">
+            Ti guiderò attraverso le funzionalità principali in pochi passaggi.
+          </p>
+        </div>
+      ),
+      placement: 'center',
+      disableBeacon: true,
+    },
+    {
+      target: '[data-tour="articles-section"]',
+      content: (
+        <div>
+          <h3 className="text-lg font-semibold mb-2">Sezione Articoli</h3>
+          <p className="text-sm text-gray-600 mb-2">
+            Da qui puoi creare nuovi articoli editoriali. Usa il pulsante "Nuovo" per inserire un nuovo articolo
+            e compilare tutti i campi necessari (titolo, contenuto, immagini, SEO, ecc.).
+          </p>
+          <p className="text-sm text-gray-600">
+            Questa sezione ti permette di inserire contenuti, non di visualizzare quelli già creati.
+          </p>
+        </div>
+      ),
+      placement: 'bottom',
+    },
+    {
+      target: '[data-tour="columns-section"]',
+      content: (
+        <div>
+          <h3 className="text-lg font-semibold mb-2">Sezione Rubriche</h3>
+          <p className="text-sm text-gray-600 mb-2">
+            Le rubriche sono contenuti speciali che raggruppano articoli tematici.
+            Da qui puoi creare nuove rubriche usando il pulsante "Nuovo".
+          </p>
+          <p className="text-sm text-gray-600">
+            Come per gli articoli, questa sezione ti permette di inserire nuove rubriche, non di visualizzare quelle esistenti.
+          </p>
+        </div>
+      ),
+      placement: 'bottom',
+    },
+    {
+      target: '[data-tour="newsroom-section"]',
+      content: (
+        <div>
+          <h3 className="text-lg font-semibold mb-2">Newsroom</h3>
+          <p className="text-sm text-gray-600 mb-2">
+            La newsroom è una raccolta di articoli interessanti: link e riferimenti ad articoli tematici.
+            Da qui puoi creare nuove raccolte di link usando il pulsante "Nuovo".
+          </p>
+          <p className="text-sm text-gray-600">
+            Anche in questo caso, puoi solo inserire nuove raccolte, non visualizzare quelle già esistenti.
+          </p>
+        </div>
+      ),
+      placement: 'bottom',
+    },
+  ];
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -48,6 +120,13 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8">
+      <TutorialTour
+        steps={dashboardSteps}
+        isRunning={isRunning}
+        onComplete={completeTutorial}
+        onSkip={stopTutorial}
+      />
+      
       <div>
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Dashboard</h1>
         <p className="text-gray-600">
@@ -57,7 +136,7 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Recent Articles */}
-        <div className="card">
+        <div className="card" data-tour="articles-section">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
               <FileText size={20} />
@@ -130,7 +209,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Recent Columns */}
-        <div className="card">
+        <div className="card" data-tour="columns-section">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
               <Columns size={20} />
@@ -219,7 +298,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Newsroom */}
-        <div className="card">
+        <div className="card" data-tour="newsroom-section">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
               <LinkIcon size={20} />
