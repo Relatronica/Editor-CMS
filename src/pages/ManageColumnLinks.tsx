@@ -11,6 +11,27 @@ interface LinkItem {
   publishDate?: string;
 }
 
+// Support both Strapi v4 (with attributes) and v5 (direct fields + documentId)
+interface ColumnData {
+  id?: number;
+  documentId?: string;
+  title?: string;
+  slug?: string;
+  description?: string;
+  links?: LinkItem[] | any[];
+  attributes?: {
+    title?: string;
+    slug?: string;
+    description?: string;
+    links?: LinkItem[] | any[];
+  };
+}
+
+interface ColumnResponse {
+  data: ColumnData;
+  meta?: any;
+}
+
 export default function ManageColumnLinksPage() {
   const { id } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
@@ -19,7 +40,7 @@ export default function ManageColumnLinksPage() {
   const [newLinks, setNewLinks] = useState<LinkItem[]>([]);
   const [existingLinksCount, setExistingLinksCount] = useState(0);
 
-  const { data: columnData, isLoading, error: queryError } = useQuery({
+  const { data: columnData, isLoading, error: queryError } = useQuery<ColumnResponse>({
     queryKey: ['columns', id, 'links'],
     queryFn: async () => {
       if (!id) {
@@ -29,9 +50,9 @@ export default function ManageColumnLinksPage() {
       const numericId = typeof id === 'string' && !isNaN(Number(id)) ? Number(id) : id;
       
       try {
-        return await apiClient.findOne('columns', numericId, {
+        return await apiClient.findOne<ColumnData>('columns', numericId, {
           populate: ['links'],
-        });
+        }) as ColumnResponse;
       } catch (error) {
         // If numeric ID fails with 404, try to fetch all columns and find by documentId
         if (error && typeof error === 'object' && 'response' in error) {
@@ -39,18 +60,18 @@ export default function ManageColumnLinksPage() {
           
           if (axiosError.response?.status === 404) {
             try {
-              const allColumns = await apiClient.find('columns', {
+              const allColumns = await apiClient.find<ColumnData>('columns', {
                 populate: ['links'],
                 pagination: { limit: 100 },
               });
               
-              let foundColumn = allColumns.data?.find((col: any) => {
+              let foundColumn = allColumns.data?.find((col: ColumnData) => {
                 const colId = typeof col?.id === 'number' ? col.id : col?.id;
                 return String(colId) === String(numericId) || colId === numericId;
               });
               
               if (!foundColumn && typeof id === 'string') {
-                foundColumn = allColumns.data?.find((col: any) => {
+                foundColumn = allColumns.data?.find((col: ColumnData) => {
                   return col?.documentId === id;
                 });
               }
@@ -88,8 +109,8 @@ export default function ManageColumnLinksPage() {
     }
   }, [columnData]);
 
-  const mutation = useMutation({
-    mutationFn: async (linksToAdd: LinkItem[]) => {
+  const mutation = useMutation<ColumnResponse, Error, LinkItem[]>({
+    mutationFn: async (linksToAdd: LinkItem[]): Promise<ColumnResponse> => {
       // Get existing links first
       const column = columnData?.data;
       const existingLinks = column?.links ?? column?.attributes?.links ?? [];
@@ -118,23 +139,31 @@ export default function ManageColumnLinksPage() {
         links: allLinks,
       };
 
+      if (!id) {
+        throw new Error('Column ID is required');
+      }
+
       const numericId = typeof id === 'string' && !isNaN(Number(id)) ? Number(id) : id;
       const documentId = column?.documentId;
 
       // Try documentId first if available, otherwise fall back to numeric id
       if (documentId) {
         try {
-          return await apiClient.update('columns', documentId, data);
+          return await apiClient.update<ColumnData>('columns', documentId, data) as ColumnResponse;
         } catch (documentIdError) {
           // Fall through to try numeric id
         }
       }
 
-      return apiClient.update('columns', numericId, data);
+      if (numericId === undefined) {
+        throw new Error('Invalid column ID');
+      }
+
+      return await apiClient.update<ColumnData>('columns', numericId, data) as ColumnResponse;
     },
-    onSuccess: (data) => {
+    onSuccess: (data: ColumnResponse) => {
       if (data?.data) {
-        const updatedColumn = data.data;
+        const updatedColumn: ColumnData = data.data;
         
         // Update the cache for the current query key to prevent refetch
         queryClient.setQueryData(['columns', id, 'links'], data);
@@ -280,7 +309,7 @@ export default function ManageColumnLinksPage() {
     );
   }
 
-  const column = columnData.data;
+  const column: ColumnData = columnData.data;
   const columnTitle = column?.title ?? column?.attributes?.title ?? 'Senza titolo';
 
   return (
