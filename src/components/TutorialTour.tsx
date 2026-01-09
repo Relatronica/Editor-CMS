@@ -36,7 +36,7 @@ export default function TutorialTour({
   },
 }: TutorialTourProps) {
   const handleCallback = (data: CallBackProps) => {
-    const { status, action, type } = data;
+    const { status, action } = data;
 
     // Gestisci tutti i casi in cui il tutorial termina
     // Joyride può emettere vari stati, gestiamo tutti quelli che indicano la fine del tour
@@ -44,7 +44,7 @@ export default function TutorialTour({
       onComplete();
     } else if (status === STATUS.SKIPPED) {
       onSkip();
-    } else if (action === 'close' && (type === 'tour:end' || type === 'tooltip:close')) {
+    } else if (action === 'close') {
       // L'utente ha chiuso il tour manualmente (cliccando X o fuori dall'overlay)
       onSkip();
     } else if (action === 'skip') {
