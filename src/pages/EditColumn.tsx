@@ -5,18 +5,45 @@ import ColumnForm from '../components/forms/ColumnForm';
 import { ArrowLeft, AlertCircle, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 
+interface ColumnFormData {
+  title: string;
+  slug: string;
+  description: string;
+  cover: { id: number; url: string } | null;
+  author: number | null;
+  links: Array<{ label: string; url: string; description?: string; publishDate?: string }>;
+}
+
+// Support both Strapi v4 (with attributes) and v5 (direct fields)
+interface ColumnData {
+  id: number;
+  documentId?: string;
+  title?: string;
+  slug?: string;
+  description?: string;
+  cover?: any;
+  author?: { data?: { id: number } } | number | null;
+  links?: Array<{ label: string; url: string; description?: string; publishDate?: string }>;
+  attributes?: Partial<ColumnFormData & { author?: { data?: { id: number } } }>;
+}
+
+interface ColumnResponse {
+  data: ColumnData;
+  meta?: any;
+}
+
 export default function EditColumnPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [error, setError] = useState('');
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading } = useQuery<ColumnResponse>({
     queryKey: ['columns', id],
     queryFn: () =>
-      apiClient.findOne('columns', id!, {
+      apiClient.findOne<ColumnData>('columns', id!, {
         populate: ['cover', 'author', 'links'],
-      }),
+      }) as Promise<ColumnResponse>,
     enabled: !!id,
   });
 
@@ -69,9 +96,9 @@ export default function EditColumnPage() {
     },
   });
 
-  const handleSubmit = async (data: unknown) => {
+  const handleSubmit = async (formData: ColumnFormData) => {
     setError('');
-    await mutation.mutateAsync(data);
+    await mutation.mutateAsync(formData);
   };
 
   if (isLoading) {
@@ -126,7 +153,25 @@ export default function EditColumnPage() {
 
       <div className="card">
         <ColumnForm
-          initialData={data.data}
+          initialData={
+            data.data.attributes
+              ? (data.data as { id: number; attributes: Partial<ColumnFormData & { author?: { data?: { id: number } } }> })
+              : {
+                  id: data.data.id,
+                  attributes: {
+                    title: data.data.title,
+                    slug: data.data.slug,
+                    description: data.data.description,
+                    cover: data.data.cover,
+                    author: typeof data.data.author === 'object' && data.data.author && 'data' in data.data.author && data.data.author.data
+                      ? { data: { id: (data.data.author as { data: { id: number } }).data.id } }
+                      : typeof data.data.author === 'number'
+                      ? { data: { id: data.data.author } }
+                      : undefined,
+                    links: data.data.links,
+                  },
+                } as { id: number; attributes: Partial<ColumnFormData & { author?: { data?: { id: number } } }> }
+          }
           onSubmit={handleSubmit}
           isSubmitting={mutation.isPending}
         />
