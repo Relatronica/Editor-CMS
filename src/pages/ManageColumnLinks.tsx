@@ -461,13 +461,7 @@ export default function ManageColumnLinksPage() {
           </div>
 
           {/* Actions */}
-          <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-            <Link
-              to={`/columns/${id}/edit`}
-              className="text-sm text-gray-600 hover:text-gray-900"
-            >
-              ← Modifica rubrica
-            </Link>
+          <div className="flex items-center justify-end pt-4 border-t border-gray-200">
             <button
               type="button"
               onClick={handleSave}
