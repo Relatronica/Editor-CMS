@@ -89,7 +89,11 @@ export default function CalendarPage() {
         filters: {
           publishDate: { $gt: now },
         },
-        populate: ['author'],
+        populate: {
+          author: {
+            populate: ['name'],
+          },
+        },
         sort: ['publishDate:asc'],
         pagination: { limit: 1000 },
       });
@@ -102,12 +106,45 @@ export default function CalendarPage() {
     queryKey: ['columns', 'scheduled'],
     queryFn: async () => {
       const result = await apiClient.find<ColumnData>('columns', {
-        populate: ['author', 'links'],
+        populate: {
+          author: {
+            populate: ['name'],
+          },
+          links: true,
+        },
         pagination: { limit: 1000 },
       });
       return result;
     },
   });
+
+  // Helper per estrarre il nome dell'autore da diverse strutture Strapi
+  const extractAuthorName = (author: unknown): string => {
+    if (!author) return 'Nessun autore';
+    
+    if (typeof author === 'number') {
+      return `Autore #${author}`;
+    }
+    
+    if (typeof author === 'object') {
+      const authorObj = author as Record<string, unknown>;
+      // Prova diverse strutture possibili (Strapi v4 e v5)
+      if (authorObj.data?.attributes?.name) {
+        return String((authorObj.data as Record<string, unknown>).attributes?.name);
+      }
+      if (authorObj.attributes?.name) {
+        return String((authorObj.attributes as Record<string, unknown>).name);
+      }
+      if (authorObj.name) {
+        return String(authorObj.name);
+      }
+      if (authorObj.data?.name) {
+        return String((authorObj.data as Record<string, unknown>).name);
+      }
+    }
+    
+    return 'Nessun autore';
+  };
 
   // Processa e combina tutti i contenuti programmati
   const scheduledContent = useMemo<ScheduledContent[]>(() => {
@@ -123,16 +160,7 @@ export default function CalendarPage() {
         if (publishDateStr) {
           const publishDate = parseISO(publishDateStr);
           if (publishDate > now) {
-            // Estrai nome autore
-            let authorName = 'Nessun autore';
-            const author = attrs.author;
-            if (author) {
-              if (typeof author === 'number') {
-                authorName = `Autore #${author}`;
-              } else if (author.data?.attributes?.name) {
-                authorName = author.data.attributes.name;
-              }
-            }
+            const authorName = extractAuthorName(attrs.author);
 
             content.push({
               id: `article-${article.id}`,
@@ -153,16 +181,7 @@ export default function CalendarPage() {
         const attrs = column.attributes || column;
         const links = attrs.links || [];
 
-        // Estrai nome autore della colonna
-        let authorName = 'Nessun autore';
-        const author = attrs.author;
-        if (author) {
-          if (typeof author === 'number') {
-            authorName = `Autore #${author}`;
-          } else if (author.data?.attributes?.name) {
-            authorName = author.data.attributes.name;
-          }
-        }
+        const authorName = extractAuthorName(attrs.author);
 
         links.forEach((link, index) => {
           if (link.publishDate) {
