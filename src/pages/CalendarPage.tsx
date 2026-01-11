@@ -89,11 +89,7 @@ export default function CalendarPage() {
         filters: {
           publishDate: { $gt: now },
         },
-        populate: {
-          author: {
-            populate: ['name'],
-          },
-        },
+        populate: ['author'],
         sort: ['publishDate:asc'],
         pagination: { limit: 1000 },
       });
@@ -106,12 +102,7 @@ export default function CalendarPage() {
     queryKey: ['columns', 'scheduled'],
     queryFn: async () => {
       const result = await apiClient.find<ColumnData>('columns', {
-        populate: {
-          author: {
-            populate: ['name'],
-          },
-          links: true,
-        },
+        populate: ['author', 'links'],
         pagination: { limit: 1000 },
       });
       return result;
