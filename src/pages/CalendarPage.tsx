@@ -126,20 +126,47 @@ export default function CalendarPage() {
       return `Autore #${author}`;
     }
     
-    if (typeof author === 'object') {
+    if (typeof author === 'object' && author !== null) {
       const authorObj = author as Record<string, unknown>;
+      
       // Prova diverse strutture possibili (Strapi v4 e v5)
-      if (authorObj.data?.attributes?.name) {
-        return String((authorObj.data as Record<string, unknown>).attributes?.name);
+      // author.data.attributes.name
+      if (
+        authorObj.data &&
+        typeof authorObj.data === 'object' &&
+        authorObj.data !== null
+      ) {
+        const dataObj = authorObj.data as Record<string, unknown>;
+        if (
+          dataObj.attributes &&
+          typeof dataObj.attributes === 'object' &&
+          dataObj.attributes !== null
+        ) {
+          const attrs = dataObj.attributes as Record<string, unknown>;
+          if (typeof attrs.name === 'string') {
+            return attrs.name;
+          }
+        }
+        if (typeof dataObj.name === 'string') {
+          return dataObj.name;
+        }
       }
-      if (authorObj.attributes?.name) {
-        return String((authorObj.attributes as Record<string, unknown>).name);
+      
+      // author.attributes.name
+      if (
+        authorObj.attributes &&
+        typeof authorObj.attributes === 'object' &&
+        authorObj.attributes !== null
+      ) {
+        const attrs = authorObj.attributes as Record<string, unknown>;
+        if (typeof attrs.name === 'string') {
+          return attrs.name;
+        }
       }
-      if (authorObj.name) {
-        return String(authorObj.name);
-      }
-      if (authorObj.data?.name) {
-        return String((authorObj.data as Record<string, unknown>).name);
+      
+      // author.name
+      if (typeof authorObj.name === 'string') {
+        return authorObj.name;
       }
     }
     
