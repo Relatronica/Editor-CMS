@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { apiClient } from '../lib/api';
-import { FileText, Columns, Clock, CheckCircle2, Edit, Link as LinkIcon, Plus } from 'lucide-react';
+import { FileText, Columns, Clock, CheckCircle2, Edit, Link as LinkIcon, Plus, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { useTutorial } from '../hooks/useTutorial';
@@ -127,11 +127,20 @@ export default function DashboardPage() {
         onSkip={stopTutorial}
       />
       
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Dashboard</h1>
-        <p className="text-gray-600">
-          Gestisci i tuoi contenuti e crea nuovi articoli o colonne
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Dashboard</h1>
+          <p className="text-gray-600">
+            Gestisci i tuoi contenuti e crea nuovi articoli o colonne
+          </p>
+        </div>
+        <Link
+          to="/calendar"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition-colors"
+        >
+          <Calendar size={18} />
+          <span>Calendario</span>
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

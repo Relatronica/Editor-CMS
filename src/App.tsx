@@ -9,6 +9,7 @@ import ManageColumnLinksPage from './pages/ManageColumnLinks';
 import SelectColumnForLinksPage from './pages/SelectColumnForLinks';
 import CreateArticlePage from './pages/CreateArticle';
 import EditArticlePage from './pages/EditArticle';
+import CalendarPage from './pages/CalendarPage';
 import Layout from './components/Layout';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -111,6 +112,16 @@ function App() {
           <ProtectedRoute>
             <Layout>
               <EditArticlePage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/calendar"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <CalendarPage />
             </Layout>
           </ProtectedRoute>
         }

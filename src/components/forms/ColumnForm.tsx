@@ -190,6 +190,36 @@ export default function ColumnForm({
     }));
   };
 
+  // Helper per separare data e ora da una stringa ISO
+  const splitDateTime = (dateTimeStr: string | undefined): { date: string; time: string } => {
+    if (!dateTimeStr) {
+      const now = new Date();
+      return {
+        date: now.toISOString().slice(0, 10),
+        time: now.toTimeString().slice(0, 5),
+      };
+    }
+    try {
+      const date = new Date(dateTimeStr);
+      return {
+        date: date.toISOString().slice(0, 10),
+        time: date.toTimeString().slice(0, 5),
+      };
+    } catch {
+      const now = new Date();
+      return {
+        date: now.toISOString().slice(0, 10),
+        time: now.toTimeString().slice(0, 5),
+      };
+    }
+  };
+
+  // Helper per combinare data e ora in formato ISO
+  const combineDateTime = (date: string, time: string): string => {
+    if (!date || !time) return '';
+    return new Date(`${date}T${time}`).toISOString();
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     await onSubmit(formData);
@@ -419,16 +449,39 @@ export default function ColumnForm({
                 </div>
 
                 <div>
-                  <label className="label text-xs">Data di pubblicazione (opzionale)</label>
-                  <input
-                    type="datetime-local"
-                    value={link.publishDate ? new Date(link.publishDate).toISOString().slice(0, 16) : ''}
-                    onChange={(e) =>
-                      handleLinkChange(index, 'publishDate', e.target.value ? new Date(e.target.value).toISOString() : '')
-                    }
-                    className="input text-sm"
-                    placeholder="Data di pubblicazione del link"
-                  />
+                  <label className="label text-xs mb-2">Data di pubblicazione (opzionale)</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">
+                        Data
+                      </label>
+                      <input
+                        type="date"
+                        value={splitDateTime(link.publishDate).date}
+                        onChange={(e) => {
+                          const { time } = splitDateTime(link.publishDate);
+                          const newDateTime = combineDateTime(e.target.value, time);
+                          handleLinkChange(index, 'publishDate', newDateTime);
+                        }}
+                        className="input text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">
+                        Ora
+                      </label>
+                      <input
+                        type="time"
+                        value={splitDateTime(link.publishDate).time}
+                        onChange={(e) => {
+                          const { date } = splitDateTime(link.publishDate);
+                          const newDateTime = combineDateTime(date, e.target.value);
+                          handleLinkChange(index, 'publishDate', newDateTime);
+                        }}
+                        className="input text-sm"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             ))}

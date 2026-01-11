@@ -59,6 +59,16 @@ export default function ArticleForm({
 }: ArticleFormProps) {
   const { isRunning, completeTutorial, stopTutorial } = useTutorial('article-form');
   
+  // Stati separati per data e ora
+  const [publishDate, setPublishDate] = useState<string>(() => {
+    const now = new Date();
+    return now.toISOString().slice(0, 10); // YYYY-MM-DD
+  });
+  const [publishTime, setPublishTime] = useState<string>(() => {
+    const now = new Date();
+    return now.toTimeString().slice(0, 5); // HH:mm
+  });
+
   const [formData, setFormData] = useState<ArticleFormData>({
     title: '',
     slug: '',
@@ -291,6 +301,20 @@ export default function ArticleForm({
       }),
   });
 
+  // Sincronizza publishDate quando cambiano data o ora
+  useEffect(() => {
+    if (publishDate && publishTime) {
+      const combined = `${publishDate}T${publishTime}`;
+      setFormData((prev) => {
+        // Solo aggiorna se è diverso per evitare loop infiniti
+        if (prev.publishDate !== combined) {
+          return { ...prev, publishDate: combined };
+        }
+        return prev;
+      });
+    }
+  }, [publishDate, publishTime]);
+
   // Initialize form
   useEffect(() => {
     if (initialData) {
@@ -316,6 +340,13 @@ export default function ArticleForm({
         }
         return '';
       };
+
+      const publishDateValue = attrs.publishDate
+        ? new Date(attrs.publishDate)
+        : new Date();
+      
+      setPublishDate(publishDateValue.toISOString().slice(0, 10));
+      setPublishTime(publishDateValue.toTimeString().slice(0, 5));
 
       setFormData({
         title: attrs.title || '',
@@ -570,18 +601,39 @@ export default function ArticleForm({
 
       {/* Publish Date */}
       <div>
-        <label htmlFor="publishDate" className="label">
+        <label className="label">
           Data di pubblicazione
         </label>
-        <input
-          id="publishDate"
-          type="datetime-local"
-          value={formData.publishDate}
-          onChange={(e) =>
-            setFormData((prev) => ({ ...prev, publishDate: e.target.value }))
-          }
-          className="input"
-        />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="publishDate" className="block text-sm font-medium text-gray-700 mb-1">
+              Data
+            </label>
+            <input
+              id="publishDate"
+              type="date"
+              value={publishDate}
+              onChange={(e) => {
+                setPublishDate(e.target.value);
+              }}
+              className="input"
+            />
+          </div>
+          <div>
+            <label htmlFor="publishTime" className="block text-sm font-medium text-gray-700 mb-1">
+              Ora
+            </label>
+            <input
+              id="publishTime"
+              type="time"
+              value={publishTime}
+              onChange={(e) => {
+                setPublishTime(e.target.value);
+              }}
+              className="input"
+            />
+          </div>
+        </div>
       </div>
 
       {/* Premium & Reading Time */}
