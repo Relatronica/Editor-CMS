@@ -152,7 +152,6 @@ export default function CalendarPage() {
       columnsData.data.forEach((column) => {
         const attrs = column.attributes || column;
         const links = attrs.links || [];
-        const columnTitle = attrs.title || 'Senza titolo';
 
         // Estrai nome autore della colonna
         let authorName = 'Nessun autore';
