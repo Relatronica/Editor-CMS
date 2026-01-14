@@ -11,6 +11,7 @@ interface ScheduledContent {
   type: 'article' | 'column-link';
   title: string;
   authorName: string;
+  description?: string;
   publishDate: Date;
   articleId?: number;
   columnId?: number;
@@ -169,6 +170,7 @@ export default function CalendarPage() {
     const content: ScheduledContent[] = [];
     const now = new Date();
 
+
     // Processa articoli
     if (articlesData?.data) {
       articlesData.data.forEach((article) => {
@@ -195,25 +197,44 @@ export default function CalendarPage() {
 
     // Processa link delle colonne
     if (columnsData?.data) {
+      let totalLinks = 0;
+      let linksWithPublishDate = 0;
+      
       columnsData.data.forEach((column) => {
         const attrs = column.attributes || column;
-        const links = attrs.links || [];
+        // Estrai i link da diverse strutture possibili (come in ManageColumnLinks)
+        const links = (column?.links ?? column?.attributes?.links ?? []) as ColumnLink[];
+        const linksArray = Array.isArray(links) ? links : [];
+        
+        totalLinks += linksArray.length;
 
         const authorName = extractAuthorName(attrs.author);
 
-        links.forEach((link, index) => {
-          if (link.publishDate) {
-            const publishDate = parseISO(link.publishDate);
-            if (publishDate > now) {
+        linksArray.forEach((link, index) => {
+          // Estrai publishDate da diverse strutture possibili
+          const publishDateStr = link?.publishDate || (link as any)?.attributes?.publishDate;
+          
+          if (publishDateStr) {
+            linksWithPublishDate++;
+            try {
+              const publishDate = parseISO(publishDateStr);
+              // Mostra tutti i link con publishDate, anche quelli passati (per il calendario)
+              // Estrai label e description da diverse strutture
+              const label = link?.label || (link as any)?.attributes?.label || 'Link senza label';
+              const description = link?.description || (link as any)?.attributes?.description;
+              
               content.push({
                 id: `column-${column.id}-link-${index}`,
                 type: 'column-link',
-                title: link.label || 'Link senza label',
+                title: label,
                 authorName,
+                description,
                 publishDate,
                 columnId: column.id,
                 linkIndex: index,
               });
+            } catch (error) {
+              console.warn('Errore nel parsing della data per link:', link, error);
             }
           }
         });
@@ -339,39 +360,6 @@ export default function CalendarPage() {
         </div>
       </div>
 
-      {/* Statistiche */}
-      <div className="flex items-center gap-4 px-4 py-3 bg-white border border-gray-200 rounded-lg">
-        <div className="flex items-center gap-2">
-          <FileText className="text-primary-600" size={18} />
-          <div>
-            <p className="text-xs text-gray-500">Articoli</p>
-            <p className="text-lg font-bold text-gray-900">
-              {scheduledContent.filter((c) => c.type === 'article').length}
-            </p>
-          </div>
-        </div>
-        <div className="h-8 w-px bg-gray-200" />
-        <div className="flex items-center gap-2">
-          <LinkIcon className="text-primary-600" size={18} />
-          <div>
-            <p className="text-xs text-gray-500">Link</p>
-            <p className="text-lg font-bold text-gray-900">
-              {scheduledContent.filter((c) => c.type === 'column-link').length}
-            </p>
-          </div>
-        </div>
-        <div className="h-8 w-px bg-gray-200" />
-        <div className="flex items-center gap-2">
-          <Calendar className="text-primary-600" size={18} />
-          <div>
-            <p className="text-xs text-gray-500">Totale</p>
-            <p className="text-lg font-bold text-gray-900">
-              {scheduledContent.length}
-            </p>
-          </div>
-        </div>
-      </div>
-
       {/* Navigazione mese */}
       <div className="card">
         <div className="flex items-center justify-between mb-6">
@@ -447,8 +435,8 @@ export default function CalendarPage() {
                       {format(day, 'd')}
                     </div>
                     {dayContent.length > 0 && (
-                      <div className="absolute top-2 right-2">
-                        <span className="inline-flex items-center justify-center min-w-[24px] h-6 px-2 text-xs font-semibold text-white bg-primary-600 rounded-full">
+                      <div className="absolute -top-1 -right-1">
+                        <span className="inline-flex items-center justify-center min-w-[16px] h-4 px-1 text-[10px] font-semibold text-white bg-primary-600 rounded-full leading-none">
                           {dayContent.length}
                         </span>
                       </div>
@@ -457,6 +445,39 @@ export default function CalendarPage() {
                 );
               })}
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Statistiche */}
+      <div className="flex items-center justify-end gap-4 px-3 py-2">
+        <div className="flex items-center gap-2">
+          <FileText className="text-primary-600" size={16} />
+          <div>
+            <p className="text-xs text-gray-500 leading-tight">Articoli</p>
+            <p className="text-xs font-bold text-gray-900 leading-tight">
+              {scheduledContent.filter((c) => c.type === 'article').length}
+            </p>
+          </div>
+        </div>
+        <div className="h-7 w-px bg-gray-200" />
+        <div className="flex items-center gap-2">
+          <LinkIcon className="text-primary-600" size={16} />
+          <div>
+            <p className="text-xs text-gray-500 leading-tight">Link</p>
+            <p className="text-xs font-bold text-gray-900 leading-tight">
+              {scheduledContent.filter((c) => c.type === 'column-link').length}
+            </p>
+          </div>
+        </div>
+        <div className="h-7 w-px bg-gray-200" />
+        <div className="flex items-center gap-2">
+          <Calendar className="text-primary-600" size={16} />
+          <div>
+            <p className="text-xs text-gray-500 leading-tight">Totale</p>
+            <p className="text-xs font-bold text-gray-900 leading-tight">
+              {scheduledContent.length}
+            </p>
           </div>
         </div>
       </div>
@@ -491,6 +512,11 @@ export default function CalendarPage() {
                     <p className="text-sm text-gray-600">
                       Autore: <span className="font-medium">{item.authorName}</span>
                     </p>
+                    {item.description && (
+                      <p className="text-sm text-gray-600 mt-2">
+                        {item.description}
+                      </p>
+                    )}
                     <p className="text-sm text-gray-500 mt-1">
                       {format(item.publishDate, "dd MMMM yyyy 'alle' HH:mm", { locale: it })}
                     </p>
