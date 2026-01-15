@@ -167,8 +167,6 @@ export default function CalendarPage() {
   // Processa e combina tutti i contenuti programmati
   const scheduledContent = useMemo<ScheduledContent[]>(() => {
     const content: ScheduledContent[] = [];
-    const now = new Date();
-
 
     // Processa articoli
     if (articlesData?.data) {
