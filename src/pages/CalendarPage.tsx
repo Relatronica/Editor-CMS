@@ -81,14 +81,13 @@ export default function CalendarPage() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
 
-  // Recupera articoli programmati
+  // Recupera articoli programmati (include sia passati che futuri)
   const { data: articlesData, isLoading: articlesLoading } = useQuery({
     queryKey: ['articles', 'scheduled'],
     queryFn: async () => {
-      const now = new Date().toISOString();
       const result = await apiClient.find<ArticleData>('articles', {
         filters: {
-          publishDate: { $gt: now },
+          publishDate: { $notNull: true },
         },
         populate: ['author'],
         sort: ['publishDate:asc'],
@@ -178,8 +177,9 @@ export default function CalendarPage() {
         const publishDateStr = attrs.publishDate;
         
         if (publishDateStr) {
-          const publishDate = parseISO(publishDateStr);
-          if (publishDate > now) {
+          try {
+            const publishDate = parseISO(publishDateStr);
+            // Mostra tutti gli articoli con publishDate, sia passati che futuri (per il calendario)
             const authorName = extractAuthorName(attrs.author);
 
             content.push({
@@ -190,6 +190,8 @@ export default function CalendarPage() {
               publishDate,
               articleId: article.id,
             });
+          } catch (error) {
+            console.warn('Errore nel parsing della data per articolo:', article, error);
           }
         }
       });
