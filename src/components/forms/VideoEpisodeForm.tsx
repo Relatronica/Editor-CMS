@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../../lib/api';
 import { API_ENDPOINTS } from '../../config/endpoints';
-import { VIDEO_EPISODE_FIELDS } from '../../config/videoEpisodeFields';
 import ImageUpload from '../ui/ImageUpload';
 import VideoUpload from '../ui/VideoUpload';
 import Select from '../ui/Select';

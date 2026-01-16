@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Upload, X, Loader2, Play, Film } from 'lucide-react';
+import { X, Loader2, Film } from 'lucide-react';
 import { apiClient } from '../../lib/api';
 
 interface VideoUploadProps {
@@ -63,13 +63,6 @@ export default function VideoUpload({
   const handleRemove = () => {
     onChange(null);
     setError('');
-  };
-
-  // Format file size for display
-  const formatFileSize = (bytes: number): string => {
-    if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
   };
 
   return (
