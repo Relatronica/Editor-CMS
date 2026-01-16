@@ -87,7 +87,7 @@ export default function ArticleForm({
   // Stato per verificare se lo slug esiste già
   const [slugExists, setSlugExists] = useState(false);
   const [isCheckingSlug, setIsCheckingSlug] = useState(false);
-  const slugCheckTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const slugCheckTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const articleFormSteps: Step[] = [
     {

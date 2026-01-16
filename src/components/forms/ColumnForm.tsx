@@ -47,7 +47,7 @@ export default function ColumnForm({
   // Stato per verificare se lo slug esiste già
   const [slugExists, setSlugExists] = useState(false);
   const [isCheckingSlug, setIsCheckingSlug] = useState(false);
-  const slugCheckTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const slugCheckTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Stato per link duplicati
   const [duplicateLinks, setDuplicateLinks] = useState<Set<number>>(new Set());

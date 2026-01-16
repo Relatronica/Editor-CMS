@@ -60,7 +60,7 @@ export default function EditColumnPage() {
       // Se il form ha meno link rispetto a quelli esistenti, potrebbe essere una perdita accidentale
       // (es: durante un'importazione parziale). In questo caso, preserviamo i link esistenti.
       const currentColumn = data?.data;
-      const existingLinks = currentColumn?.links ?? currentColumn?.attributes?.links ?? [];
+      const existingLinks = (currentColumn as ColumnData)?.links ?? (currentColumn as ColumnData)?.attributes?.links ?? [];
       const existingLinksArray = Array.isArray(existingLinks) ? existingLinks : [];
       
       // Formatta i link esistenti per il confronto
@@ -133,7 +133,7 @@ export default function EditColumnPage() {
       }
 
       // Format data for Strapi API
-      const data: Record<string, unknown> = {
+      const updateData: Record<string, unknown> = {
         title: formData.title,
         slug: formData.slug,
         description: formData.description,
@@ -141,22 +141,22 @@ export default function EditColumnPage() {
       };
 
       if (formData.cover) {
-        data.cover = formData.cover.id;
+        updateData.cover = formData.cover.id;
       } else {
         // Non impostare a null se esiste già una cover - preservala
         // Solo se l'utente ha esplicitamente rimosso la cover, allora sarà null nel formData
-        const currentCover = currentColumn?.cover ?? currentColumn?.attributes?.cover;
+        const currentCover = (currentColumn as ColumnData)?.cover ?? (currentColumn as ColumnData)?.attributes?.cover;
         if (!currentCover && formData.cover === null) {
-          data.cover = null;
+          updateData.cover = null;
         }
         // Se c'è una cover esistente e formData.cover è null, non la sovrascriviamo
       }
 
       if (formData.author !== null && formData.author !== undefined) {
-        data.author = formData.author;
+        updateData.author = formData.author;
       } else {
         // Preserva l'autore esistente se non specificato
-        const currentAuthor = currentColumn?.author ?? currentColumn?.attributes?.author;
+        const currentAuthor = (currentColumn as ColumnData)?.author ?? (currentColumn as ColumnData)?.attributes?.author;
         if (currentAuthor) {
           const authorId = typeof currentAuthor === 'object' && 'data' in currentAuthor && currentAuthor.data
             ? (currentAuthor as { data: { id: number } }).data.id
@@ -164,14 +164,14 @@ export default function EditColumnPage() {
             ? currentAuthor
             : null;
           if (authorId) {
-            data.author = authorId;
+            updateData.author = authorId;
           }
         } else {
-          data.author = null;
+          updateData.author = null;
         }
       }
 
-      return apiClient.update('columns', id!, data);
+      return apiClient.update('columns', id!, updateData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['columns'] });

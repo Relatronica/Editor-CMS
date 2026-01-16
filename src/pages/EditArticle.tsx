@@ -107,7 +107,7 @@ export default function EditArticlePage() {
       const currentAttrs = currentArticle?.attributes || currentArticle;
 
       // Format data for Strapi API
-      const data: Record<string, unknown> = {
+      const updateData: Record<string, unknown> = {
         title: formData.title,
         slug: formData.slug,
         excerpt: formData.excerpt || null,
@@ -119,7 +119,7 @@ export default function EditArticlePage() {
 
       // Preserva heroImage esistente se non specificato nel form
       if (formData.heroImage) {
-        data.heroImage = formData.heroImage.id;
+        updateData.heroImage = formData.heroImage.id;
       } else {
         // Se il form ha null esplicitamente, rimuovi l'immagine
         // Altrimenti preserva quella esistente
@@ -128,18 +128,18 @@ export default function EditArticlePage() {
           // Preserva l'immagine esistente se non è stata rimossa esplicitamente
           const heroImageId = currentHeroImage?.data?.id ?? currentHeroImage?.id;
           if (heroImageId) {
-            data.heroImage = heroImageId;
+            updateData.heroImage = heroImageId;
           } else {
-            data.heroImage = null;
+            updateData.heroImage = null;
           }
         } else {
-          data.heroImage = null;
+          updateData.heroImage = null;
         }
       }
 
       // Preserva author esistente se non specificato
       if (formData.author !== null && formData.author !== undefined) {
-        data.author = formData.author;
+        updateData.author = formData.author;
       } else {
         const currentAuthor = currentAttrs?.author;
         if (currentAuthor) {
@@ -149,18 +149,18 @@ export default function EditArticlePage() {
             ? currentAuthor
             : null;
           if (authorId) {
-            data.author = authorId;
+            updateData.author = authorId;
           } else {
-            data.author = null;
+            updateData.author = null;
           }
         } else {
-          data.author = null;
+          updateData.author = null;
         }
       }
 
       // Preserva tags e partners esistenti se il form è vuoto (potrebbe essere una perdita accidentale)
       if (formData.tags.length > 0) {
-        data.tags = formData.tags;
+        updateData.tags = formData.tags;
       } else {
         // Se il form è vuoto ma ci sono tag esistenti, preservali per sicurezza
         const currentTags = currentAttrs?.tags;
@@ -170,14 +170,14 @@ export default function EditArticlePage() {
                 typeof tag === 'object' && 'id' in tag ? tag.id : tag
               ).filter((id: any): id is number => typeof id === 'number')
             : [];
-          data.tags = tagIds.length > 0 ? tagIds : [];
+          updateData.tags = tagIds.length > 0 ? tagIds : [];
         } else {
-          data.tags = [];
+          updateData.tags = [];
         }
       }
 
       if (formData.partners.length > 0) {
-        data.partners = formData.partners;
+        updateData.partners = formData.partners;
       } else {
         // Se il form è vuoto ma ci sono partner esistenti, preservali per sicurezza
         const currentPartners = currentAttrs?.partners;
@@ -187,9 +187,9 @@ export default function EditArticlePage() {
                 typeof partner === 'object' && 'id' in partner ? partner.id : partner
               ).filter((id: any): id is number => typeof id === 'number')
             : [];
-          data.partners = partnerIds.length > 0 ? partnerIds : [];
+          updateData.partners = partnerIds.length > 0 ? partnerIds : [];
         } else {
-          data.partners = [];
+          updateData.partners = [];
         }
       }
 
@@ -207,7 +207,7 @@ export default function EditArticlePage() {
         if (formData.seo.preventIndexing !== undefined) {
           seoData.preventIndexing = formData.seo.preventIndexing;
         }
-        data.seo = seoData;
+        updateData.seo = seoData;
       } else {
         // Se SEO non è nel form, preserva quello esistente
         const currentSeo = currentAttrs?.seo;
@@ -226,16 +226,16 @@ export default function EditArticlePage() {
             }
           }
           if (Object.keys(seoData).length > 0) {
-            data.seo = seoData;
+            updateData.seo = seoData;
           } else {
-            data.seo = null;
+            updateData.seo = null;
           }
         } else {
-          data.seo = null;
+          updateData.seo = null;
         }
       }
 
-      return apiClient.update('articles', id!, data);
+      return apiClient.update('articles', id!, updateData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['articles'] });
