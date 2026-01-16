@@ -1,9 +1,9 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../../lib/api';
 import ImageUpload from '../ui/ImageUpload';
 import Select from '../ui/Select';
-import { Plus, X, Loader2 } from 'lucide-react';
+import { Plus, X, Loader2, AlertCircle } from 'lucide-react';
 
 interface LinkItem {
   label: string;
@@ -43,6 +43,14 @@ export default function ColumnForm({
     author: null,
     links: [],
   });
+
+  // Stato per verificare se lo slug esiste già
+  const [slugExists, setSlugExists] = useState(false);
+  const [isCheckingSlug, setIsCheckingSlug] = useState(false);
+  const slugCheckTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Stato per link duplicati
+  const [duplicateLinks, setDuplicateLinks] = useState<Set<number>>(new Set());
 
   // Load authors
   const { data: authorsData, error: authorsError, isLoading: authorsLoading } = useQuery({
@@ -145,6 +153,80 @@ export default function ColumnForm({
       });
     }
   }, [initialData]);
+
+  // Verifica se lo slug esiste già (solo per nuove colonne, non in modifica)
+  useEffect(() => {
+    // Non verificare se siamo in modalità modifica o se lo slug è vuoto
+    if (initialData || !formData.slug || formData.slug.length < 3) {
+      setSlugExists(false);
+      return;
+    }
+
+    // Cancella il timeout precedente
+    if (slugCheckTimeoutRef.current) {
+      clearTimeout(slugCheckTimeoutRef.current);
+    }
+
+    // Debounce: aspetta 500ms prima di verificare
+    setIsCheckingSlug(true);
+    slugCheckTimeoutRef.current = setTimeout(async () => {
+      try {
+        const existingColumns = await apiClient.find<{ 
+          id: number; 
+          attributes?: { slug?: string }; 
+          slug?: string 
+        }>('columns', {
+          filters: {
+            slug: { $eq: formData.slug },
+          },
+          pagination: { limit: 1 },
+        });
+
+        if (existingColumns?.data && existingColumns.data.length > 0) {
+          const existingColumn = existingColumns.data[0];
+          const existingSlug = existingColumn.attributes?.slug || existingColumn.slug;
+          setSlugExists(existingSlug === formData.slug);
+        } else {
+          setSlugExists(false);
+        }
+      } catch (error) {
+        console.warn('Errore durante la verifica dello slug:', error);
+        setSlugExists(false);
+      } finally {
+        setIsCheckingSlug(false);
+      }
+    }, 500);
+
+    return () => {
+      if (slugCheckTimeoutRef.current) {
+        clearTimeout(slugCheckTimeoutRef.current);
+      }
+    };
+  }, [formData.slug, initialData]);
+
+  // Verifica link duplicati (stessa URL)
+  useEffect(() => {
+    const duplicates = new Set<number>();
+    const urlMap = new Map<string, number[]>();
+
+    formData.links.forEach((link, index) => {
+      if (link.url && link.url.trim()) {
+        const normalizedUrl = link.url.trim().toLowerCase();
+        if (!urlMap.has(normalizedUrl)) {
+          urlMap.set(normalizedUrl, []);
+        }
+        urlMap.get(normalizedUrl)!.push(index);
+      }
+    });
+
+    urlMap.forEach((indices) => {
+      if (indices.length > 1) {
+        indices.forEach((index) => duplicates.add(index));
+      }
+    });
+
+    setDuplicateLinks(duplicates);
+  }, [formData.links]);
 
   // Auto-generate slug from title
   const handleTitleChange = (title: string) => {
@@ -310,26 +392,57 @@ export default function ColumnForm({
         <label htmlFor="slug" className="label">
           Slug <span className="text-red-500">*</span>
         </label>
-        <input
-          id="slug"
-          type="text"
-          value={formData.slug}
-          onChange={(e) =>
-            setFormData((prev) => ({
-              ...prev,
-              slug: e.target.value
-                .toLowerCase()
-                .replace(/\s+/g, '-')
-                .replace(/[^a-z0-9-]/g, ''),
-            }))
-          }
-          className="input font-mono text-sm"
-          required
-          placeholder="slug-della-colonna"
-        />
-        <p className="mt-1 text-xs text-gray-500">
-          URL-friendly identifier (auto-generato dal titolo)
-        </p>
+        <div className="relative">
+          <input
+            id="slug"
+            type="text"
+            value={formData.slug}
+            onChange={(e) =>
+              setFormData((prev) => ({
+                ...prev,
+                slug: e.target.value
+                  .toLowerCase()
+                  .replace(/\s+/g, '-')
+                  .replace(/[^a-z0-9-]/g, ''),
+              }))
+            }
+            className={`input font-mono text-sm ${
+              slugExists && !initialData
+                ? 'border-red-300 focus:border-red-500 focus:ring-red-200'
+                : ''
+            }`}
+            required
+            placeholder="slug-della-colonna"
+          />
+          {isCheckingSlug && !initialData && formData.slug.length >= 3 && (
+            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+              <Loader2 className="animate-spin text-gray-400" size={16} />
+            </div>
+          )}
+        </div>
+        {slugExists && !initialData && (
+          <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start space-x-2">
+            <AlertCircle className="text-red-600 mt-0.5 flex-shrink-0" size={16} />
+            <div className="flex-1">
+              <p className="text-sm text-red-800 font-medium">
+                Attenzione: Esiste già una rubrica con questo slug!
+              </p>
+              <p className="text-xs text-red-600 mt-1">
+                Modifica lo slug per evitare conflitti. Le rubriche con lo stesso slug potrebbero essere sovrascritte durante le importazioni.
+              </p>
+            </div>
+          </div>
+        )}
+        {!slugExists && !isCheckingSlug && !initialData && formData.slug.length >= 3 && (
+          <p className="mt-1 text-xs text-green-600">
+            ✓ Questo slug è disponibile
+          </p>
+        )}
+        {!slugExists && !isCheckingSlug && (
+          <p className="mt-1 text-xs text-gray-500">
+            URL-friendly identifier (auto-generato dal titolo)
+          </p>
+        )}
       </div>
 
       {/* Description */}
@@ -429,10 +542,20 @@ export default function ColumnForm({
                     onChange={(e) =>
                       handleLinkChange(index, 'url', e.target.value)
                     }
-                    className="input text-sm font-mono"
+                    className={`input text-sm font-mono ${
+                      duplicateLinks.has(index)
+                        ? 'border-orange-300 focus:border-orange-500 focus:ring-orange-200'
+                        : ''
+                    }`}
                     required
                     placeholder="https://..."
                   />
+                  {duplicateLinks.has(index) && (
+                    <p className="mt-1 text-xs text-orange-600 flex items-center space-x-1">
+                      <AlertCircle size={12} />
+                      <span>Questo URL è già presente in un altro link</span>
+                    </p>
+                  )}
                 </div>
 
                 <div>

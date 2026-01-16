@@ -30,6 +30,36 @@ export default function CreateArticlePage() {
         preventIndexing?: boolean;
       } | null;
     }) => {
+      // Verifica se esiste già un articolo con lo stesso slug
+      // Questo previene sovrascritture accidentali durante importazioni
+      try {
+        const existingArticles = await apiClient.find<{ id: number; attributes?: { slug?: string }; slug?: string }>('articles', {
+          filters: {
+            slug: { $eq: formData.slug },
+          },
+          pagination: { limit: 1 },
+        });
+
+        if (existingArticles?.data && existingArticles.data.length > 0) {
+          const existingArticle = existingArticles.data[0];
+          const existingSlug = existingArticle.attributes?.slug || existingArticle.slug;
+          if (existingSlug === formData.slug) {
+            throw new Error(
+              `Esiste già un articolo con lo slug "${formData.slug}". ` +
+              `Modifica lo slug o modifica l'articolo esistente (ID: ${existingArticle.id}).`
+            );
+          }
+        }
+      } catch (error) {
+        // Se l'errore è già il nostro messaggio personalizzato, rilanciamolo
+        if (error instanceof Error && error.message.includes('Esiste già un articolo')) {
+          throw error;
+        }
+        // Altrimenti, potrebbe essere un errore di rete o altro - continuiamo comunque
+        // per non bloccare la creazione in caso di problemi temporanei
+        console.warn('Errore durante la verifica dello slug esistente:', error);
+      }
+
       // Format data for Strapi API
       const data: Record<string, unknown> = {
         title: formData.title,

@@ -100,6 +100,12 @@ export default function EditArticlePage() {
         preventIndexing?: boolean;
       } | null;
     }) => {
+      // IMPORTANTE: Preservare i dati esistenti per evitare cancellazioni accidentali
+      // Durante un UPDATE, Strapi sostituisce completamente l'entità se usiamo PUT
+      // Dobbiamo assicurarci di includere tutti i campi necessari
+      const currentArticle = data?.data;
+      const currentAttrs = currentArticle?.attributes || currentArticle;
+
       // Format data for Strapi API
       const data: Record<string, unknown> = {
         title: formData.title,
@@ -111,21 +117,83 @@ export default function EditArticlePage() {
         readingTime: formData.readingTime || null,
       };
 
+      // Preserva heroImage esistente se non specificato nel form
       if (formData.heroImage) {
         data.heroImage = formData.heroImage.id;
       } else {
-        data.heroImage = null;
+        // Se il form ha null esplicitamente, rimuovi l'immagine
+        // Altrimenti preserva quella esistente
+        const currentHeroImage = currentAttrs?.heroImage;
+        if (currentHeroImage) {
+          // Preserva l'immagine esistente se non è stata rimossa esplicitamente
+          const heroImageId = currentHeroImage?.data?.id ?? currentHeroImage?.id;
+          if (heroImageId) {
+            data.heroImage = heroImageId;
+          } else {
+            data.heroImage = null;
+          }
+        } else {
+          data.heroImage = null;
+        }
       }
 
-      if (formData.author) {
+      // Preserva author esistente se non specificato
+      if (formData.author !== null && formData.author !== undefined) {
         data.author = formData.author;
       } else {
-        data.author = null;
+        const currentAuthor = currentAttrs?.author;
+        if (currentAuthor) {
+          const authorId = typeof currentAuthor === 'object' && 'data' in currentAuthor && currentAuthor.data
+            ? (currentAuthor as { data: { id: number } }).data.id
+            : typeof currentAuthor === 'number'
+            ? currentAuthor
+            : null;
+          if (authorId) {
+            data.author = authorId;
+          } else {
+            data.author = null;
+          }
+        } else {
+          data.author = null;
+        }
       }
 
-      data.tags = formData.tags.length > 0 ? formData.tags : [];
-      data.partners = formData.partners.length > 0 ? formData.partners : [];
+      // Preserva tags e partners esistenti se il form è vuoto (potrebbe essere una perdita accidentale)
+      if (formData.tags.length > 0) {
+        data.tags = formData.tags;
+      } else {
+        // Se il form è vuoto ma ci sono tag esistenti, preservali per sicurezza
+        const currentTags = currentAttrs?.tags;
+        if (currentTags) {
+          const tagIds = Array.isArray(currentTags) && currentTags.length > 0
+            ? currentTags.map((tag: any) => 
+                typeof tag === 'object' && 'id' in tag ? tag.id : tag
+              ).filter((id: any): id is number => typeof id === 'number')
+            : [];
+          data.tags = tagIds.length > 0 ? tagIds : [];
+        } else {
+          data.tags = [];
+        }
+      }
 
+      if (formData.partners.length > 0) {
+        data.partners = formData.partners;
+      } else {
+        // Se il form è vuoto ma ci sono partner esistenti, preservali per sicurezza
+        const currentPartners = currentAttrs?.partners;
+        if (currentPartners) {
+          const partnerIds = Array.isArray(currentPartners) && currentPartners.length > 0
+            ? currentPartners.map((partner: any) => 
+                typeof partner === 'object' && 'id' in partner ? partner.id : partner
+              ).filter((id: any): id is number => typeof id === 'number')
+            : [];
+          data.partners = partnerIds.length > 0 ? partnerIds : [];
+        } else {
+          data.partners = [];
+        }
+      }
+
+      // Preserva SEO esistente se non specificato
       if (formData.seo) {
         const seoData: Record<string, unknown> = {};
         if (formData.seo.metaTitle) seoData.metaTitle = formData.seo.metaTitle;
@@ -141,7 +209,30 @@ export default function EditArticlePage() {
         }
         data.seo = seoData;
       } else {
-        data.seo = null;
+        // Se SEO non è nel form, preserva quello esistente
+        const currentSeo = currentAttrs?.seo;
+        if (currentSeo && typeof currentSeo === 'object') {
+          const seoData: Record<string, unknown> = {};
+          if ('metaTitle' in currentSeo) seoData.metaTitle = currentSeo.metaTitle;
+          if ('metaDescription' in currentSeo) seoData.metaDescription = currentSeo.metaDescription;
+          if ('keywords' in currentSeo) seoData.keywords = currentSeo.keywords;
+          if ('preventIndexing' in currentSeo) seoData.preventIndexing = currentSeo.preventIndexing;
+          // Preserva metaImage se esiste
+          const currentMetaImage = (currentSeo as any)?.metaImage;
+          if (currentMetaImage) {
+            const metaImageId = currentMetaImage?.data?.id ?? currentMetaImage?.id;
+            if (metaImageId) {
+              seoData.metaImage = metaImageId;
+            }
+          }
+          if (Object.keys(seoData).length > 0) {
+            data.seo = seoData;
+          } else {
+            data.seo = null;
+          }
+        } else {
+          data.seo = null;
+        }
       }
 
       return apiClient.update('articles', id!, data);

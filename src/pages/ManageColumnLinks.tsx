@@ -269,6 +269,62 @@ export default function ManageColumnLinksPage() {
       return;
     }
 
+    // Verifica link duplicati tra i nuovi link
+    const urlMap = new Map<string, number[]>();
+    newLinks.forEach((link, index) => {
+      if (link.url && link.url.trim()) {
+        const normalizedUrl = link.url.trim().toLowerCase();
+        if (!urlMap.has(normalizedUrl)) {
+          urlMap.set(normalizedUrl, []);
+        }
+        urlMap.get(normalizedUrl)!.push(index);
+      }
+    });
+
+    const duplicates: number[] = [];
+    urlMap.forEach((indices) => {
+      if (indices.length > 1) {
+        duplicates.push(...indices);
+      }
+    });
+
+    if (duplicates.length > 0) {
+      setError(`Ci sono link duplicati con la stessa URL. Rimuovi i duplicati prima di salvare.`);
+      return;
+    }
+
+    // Verifica se i nuovi link hanno URL già presenti nei link esistenti
+    const column = columnData?.data;
+    const existingLinks = column?.links ?? column?.attributes?.links ?? [];
+    const existingLinksArray = Array.isArray(existingLinks) ? existingLinks : [];
+    
+    const existingUrls = new Set(
+      existingLinksArray
+        .map((link: any) => {
+          const url = link?.url ?? link?.attributes?.url;
+          return url && typeof url === 'string' ? url.trim().toLowerCase() : null;
+        })
+        .filter((url): url is string => url !== null)
+    );
+
+    const conflictingLinks: number[] = [];
+    newLinks.forEach((link, index) => {
+      if (link.url && link.url.trim()) {
+        const normalizedUrl = link.url.trim().toLowerCase();
+        if (existingUrls.has(normalizedUrl)) {
+          conflictingLinks.push(index);
+        }
+      }
+    });
+
+    if (conflictingLinks.length > 0) {
+      setError(
+        `${conflictingLinks.length} link hanno URL già presenti nella rubrica. ` +
+        `Modifica gli URL o rimuovi i link duplicati.`
+      );
+      return;
+    }
+
     await mutation.mutateAsync(newLinks);
   };
 

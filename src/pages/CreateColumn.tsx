@@ -19,6 +19,36 @@ export default function CreateColumnPage() {
       author: number | null;
       links: Array<{ label: string; url: string; description?: string; publishDate?: string }>;
     }) => {
+      // Verifica se esiste già una colonna con lo stesso slug
+      // Questo previene sovrascritture accidentali durante importazioni
+      try {
+        const existingColumns = await apiClient.find<{ id: number; attributes?: { slug?: string }; slug?: string }>('columns', {
+          filters: {
+            slug: { $eq: formData.slug },
+          },
+          pagination: { limit: 1 },
+        });
+
+        if (existingColumns?.data && existingColumns.data.length > 0) {
+          const existingColumn = existingColumns.data[0];
+          const existingSlug = existingColumn.attributes?.slug || existingColumn.slug;
+          if (existingSlug === formData.slug) {
+            throw new Error(
+              `Esiste già una rubrica con lo slug "${formData.slug}". ` +
+              `Modifica lo slug o modifica la rubrica esistente (ID: ${existingColumn.id}).`
+            );
+          }
+        }
+      } catch (error) {
+        // Se l'errore è già il nostro messaggio personalizzato, rilanciamolo
+        if (error instanceof Error && error.message.includes('Esiste già una rubrica')) {
+          throw error;
+        }
+        // Altrimenti, potrebbe essere un errore di rete o altro - continuiamo comunque
+        // per non bloccare la creazione in caso di problemi temporanei
+        console.warn('Errore durante la verifica dello slug esistente:', error);
+      }
+
       // Format data for Strapi API
       const data: Record<string, unknown> = {
         title: formData.title,

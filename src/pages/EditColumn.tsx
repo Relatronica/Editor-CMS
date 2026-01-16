@@ -56,29 +56,119 @@ export default function EditColumnPage() {
       author: number | null;
       links: Array<{ label: string; url: string; description?: string; publishDate?: string }>;
     }) => {
+      // IMPORTANTE: Protezione contro la cancellazione accidentale di link
+      // Se il form ha meno link rispetto a quelli esistenti, potrebbe essere una perdita accidentale
+      // (es: durante un'importazione parziale). In questo caso, preserviamo i link esistenti.
+      const currentColumn = data?.data;
+      const existingLinks = currentColumn?.links ?? currentColumn?.attributes?.links ?? [];
+      const existingLinksArray = Array.isArray(existingLinks) ? existingLinks : [];
+      
+      // Formatta i link esistenti per il confronto
+      const formattedExisting = existingLinksArray.map((link: any) => ({
+        label: link?.label ?? link?.attributes?.label ?? '',
+        url: link?.url ?? link?.attributes?.url ?? '',
+        description: link?.description ?? link?.attributes?.description ?? null,
+        publishDate: link?.publishDate ?? link?.attributes?.publishDate ?? null,
+      }));
+
+      // Se il form è vuoto o ha significativamente meno link, preserva quelli esistenti
+      // Questo previene la cancellazione accidentale durante importazioni
+      const formLinksCount = formData.links.filter(link => link.url && link.url.trim()).length;
+      const existingLinksCount = formattedExisting.filter(link => link.url && link.url.trim()).length;
+      
+      let finalLinks: Array<{ label: string; url: string; description: string | null; publishDate: string | null }>;
+      
+      if (formLinksCount === 0 && existingLinksCount > 0) {
+        // Form vuoto ma ci sono link esistenti: preserva quelli esistenti
+        // Questo previene la cancellazione accidentale
+        console.warn('⚠️ Form vuoto ma ci sono link esistenti. Preservando i link esistenti per sicurezza.');
+        finalLinks = formattedExisting;
+      } else if (formLinksCount < existingLinksCount * 0.5 && existingLinksCount > 3) {
+        // Form ha meno della metà dei link esistenti: potrebbe essere una perdita accidentale
+        // Preserva i link esistenti e aggiungi quelli del form
+        console.warn('⚠️ Form ha significativamente meno link rispetto a quelli esistenti. Preservando i link esistenti.');
+        const formLinkUrls = new Set(
+          formData.links
+            .filter(link => link.url && link.url.trim())
+            .map(link => link.url.trim().toLowerCase())
+        );
+        
+        // Preserva i link esistenti che non sono nel form
+        const preservedLinks = formattedExisting.filter(existingLink => {
+          const normalizedUrl = existingLink.url?.trim().toLowerCase();
+          return !normalizedUrl || !formLinkUrls.has(normalizedUrl);
+        });
+        
+        // Combina: link preservati + link dal form
+        finalLinks = [
+          ...preservedLinks,
+          ...formData.links.map((link) => ({
+            label: link.label,
+            url: link.url,
+            description: link.description || null,
+            publishDate: link.publishDate || null,
+          })),
+        ];
+        
+        // Rimuovi duplicati (mantieni quello dal form se c'è conflitto)
+        const uniqueLinksMap = new Map<string, typeof finalLinks[0]>();
+        finalLinks.forEach(link => {
+          if (link.url && link.url.trim()) {
+            const normalizedUrl = link.url.trim().toLowerCase();
+            if (!uniqueLinksMap.has(normalizedUrl) || formLinkUrls.has(normalizedUrl)) {
+              uniqueLinksMap.set(normalizedUrl, link);
+            }
+          }
+        });
+        finalLinks = Array.from(uniqueLinksMap.values());
+      } else {
+        // Form ha un numero ragionevole di link: usa solo quelli del form
+        // L'utente ha esplicitamente gestito i link
+        finalLinks = formData.links.map((link) => ({
+          label: link.label,
+          url: link.url,
+          description: link.description || null,
+          publishDate: link.publishDate || null,
+        }));
+      }
+
       // Format data for Strapi API
       const data: Record<string, unknown> = {
         title: formData.title,
         slug: formData.slug,
         description: formData.description,
-        links: formData.links.map((link) => ({
-          label: link.label,
-          url: link.url,
-          description: link.description || null,
-          publishDate: link.publishDate || null,
-        })),
+        links: finalLinks,
       };
 
       if (formData.cover) {
         data.cover = formData.cover.id;
       } else {
-        data.cover = null;
+        // Non impostare a null se esiste già una cover - preservala
+        // Solo se l'utente ha esplicitamente rimosso la cover, allora sarà null nel formData
+        const currentCover = currentColumn?.cover ?? currentColumn?.attributes?.cover;
+        if (!currentCover && formData.cover === null) {
+          data.cover = null;
+        }
+        // Se c'è una cover esistente e formData.cover è null, non la sovrascriviamo
       }
 
-      if (formData.author) {
+      if (formData.author !== null && formData.author !== undefined) {
         data.author = formData.author;
       } else {
-        data.author = null;
+        // Preserva l'autore esistente se non specificato
+        const currentAuthor = currentColumn?.author ?? currentColumn?.attributes?.author;
+        if (currentAuthor) {
+          const authorId = typeof currentAuthor === 'object' && 'data' in currentAuthor && currentAuthor.data
+            ? (currentAuthor as { data: { id: number } }).data.id
+            : typeof currentAuthor === 'number'
+            ? currentAuthor
+            : null;
+          if (authorId) {
+            data.author = authorId;
+          }
+        } else {
+          data.author = null;
+        }
       }
 
       return apiClient.update('columns', id!, data);
