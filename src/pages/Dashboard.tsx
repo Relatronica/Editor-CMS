@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { apiClient } from '../lib/api';
-import { FileText, Columns, Clock, CheckCircle2, Edit, Link as LinkIcon, Plus, Calendar } from 'lucide-react';
+import { API_ENDPOINTS } from '../config/endpoints';
+import { FileText, Columns, Clock, CheckCircle2, Edit, Link as LinkIcon, Plus, Calendar, Film } from 'lucide-react';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { useTutorial } from '../hooks/useTutorial';
@@ -41,7 +42,19 @@ export default function DashboardPage() {
       }),
   });
 
-  const isLoading = articlesLoading || columnsLoading;
+  const { data: videoEpisodes, isLoading: videoEpisodesLoading } = useQuery({
+    queryKey: ['video-episodes', 'recent'],
+    queryFn: () => {
+      console.log('🎬 Fetching video episodes with endpoint:', API_ENDPOINTS.videoEpisodes);
+      return apiClient.find<ContentItem>(API_ENDPOINTS.videoEpisodes, {
+        sort: ['updatedAt:desc'],
+        pagination: { limit: 10 },
+        populate: '*',
+      });
+    },
+  });
+
+  const isLoading = articlesLoading || columnsLoading || videoEpisodesLoading;
 
   const dashboardSteps: Step[] = [
     {
@@ -302,6 +315,79 @@ export default function DashboardPage() {
           ) : (
             <p className="text-sm text-gray-500 text-center py-4">
               Nessuna rubrica ancora. Crea la prima!
+            </p>
+          )}
+        </div>
+
+        {/* Video Episodes */}
+        <div className="card">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
+              <Film size={20} />
+              <span>Video Episodes</span>
+            </h2>
+            <Link
+              to="/video-episodes/new"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition-colors"
+            >
+              <Plus size={16} />
+              <span>Nuovo</span>
+            </Link>
+          </div>
+
+          {videoEpisodes?.data && videoEpisodes.data.length > 0 ? (
+            <div className="space-y-3">
+              {videoEpisodes.data
+                .filter((episode) => episode?.attributes?.title)
+                .map((episode) => (
+                  <Link
+                    key={episode.id}
+                    to={`/video-episodes/${episode.id}/edit`}
+                    className="block p-3 rounded-lg border border-gray-200 hover:border-primary-300 hover:bg-primary-50 transition-colors"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-medium text-gray-900 truncate">
+                          {episode.attributes.title || 'Senza titolo'}
+                        </h3>
+                        <div className="flex items-center space-x-2 mt-1">
+                          {episode.attributes.updatedAt && (
+                            <span className="text-xs text-gray-500">
+                              {format(
+                                new Date(episode.attributes.updatedAt),
+                                'dd MMM yyyy, HH:mm',
+                                { locale: it }
+                              )}
+                            </span>
+                          )}
+                          {episode.attributes.publishedAt ? (
+                            <span title="Pubblicato">
+                              <CheckCircle2
+                                size={14}
+                                className="text-green-600"
+                              />
+                            </span>
+                          ) : (
+                            <span title="Draft">
+                              <Clock
+                                size={14}
+                                className="text-gray-400"
+                              />
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <Edit
+                        size={16}
+                        className="text-gray-400 ml-2 flex-shrink-0"
+                      />
+                    </div>
+                  </Link>
+                ))}
+            </div>
+          ) : (
+            <p className="text-sm text-gray-500 text-center py-4">
+              Nessun episodio video ancora. Crea il primo!
             </p>
           )}
         </div>

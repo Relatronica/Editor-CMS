@@ -10,6 +10,8 @@ import SelectColumnForLinksPage from './pages/SelectColumnForLinks';
 import CreateArticlePage from './pages/CreateArticle';
 import EditArticlePage from './pages/EditArticle';
 import CalendarPage from './pages/CalendarPage';
+import CreateVideoEpisodePage from './pages/CreateVideoEpisode';
+import EditVideoEpisodePage from './pages/EditVideoEpisode';
 import Layout from './components/Layout';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -122,6 +124,26 @@ function App() {
           <ProtectedRoute>
             <Layout>
               <CalendarPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/video-episodes/new"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <CreateVideoEpisodePage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/video-episodes/:id/edit"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <EditVideoEpisodePage />
             </Layout>
           </ProtectedRoute>
         }

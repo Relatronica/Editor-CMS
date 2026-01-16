@@ -121,9 +121,9 @@ export default function CreateArticlePage() {
     title: string;
     slug: string;
     excerpt: string;
-    body: string;
-    heroImage: { id: number; url: string } | null;
-    publishDate: string;
+      body: string;
+      heroImage: { id: number; url: string } | null;
+      publishDate: string;
     isPremium: boolean;
     readingTime: number | null;
     author: number | null;

@@ -1,9 +1,11 @@
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../lib/api';
-import ArticleForm from '../components/forms/ArticleForm';
+import VideoEpisodeForm from '../components/forms/VideoEpisodeForm';
 import { ArrowLeft, AlertCircle, Loader2 } from 'lucide-react';
 import { useState } from 'react';
+import { API_ENDPOINTS } from '../config/endpoints';
+import { VIDEO_EPISODE_FIELDS } from '../config/videoEpisodeFields';
 
 interface SEOData {
   metaTitle?: string;
@@ -13,42 +15,45 @@ interface SEOData {
   preventIndexing?: boolean;
 }
 
-interface ArticleFormData {
+interface VideoEpisodeFormData {
   title: string;
   slug: string;
-  excerpt: string;
+  synopsis: string;
   body: string;
   heroImage: { id: number; url: string } | null;
+  videoUrl: string;
+  videoOrientation: string | null;
+  durationSeconds: number | null;
   publishDate: string;
   isPremium: boolean;
-  readingTime: number | null;
-  author: number | null;
+  show: number | null;
   tags: number[];
   partners: number[];
   seo: SEOData | null;
 }
 
-// Support both Strapi v4 (with attributes) and v5 (direct fields)
-interface ArticleData {
+interface VideoEpisodeData {
   id: number;
   documentId?: string;
   title?: string;
   slug?: string;
-  excerpt?: string;
+  synopsis?: string;
   body?: string;
   heroImage?: any;
+  videoUrl?: string;
+  videoOrientation?: string | null;
+  durationSeconds?: number | null;
   publishDate?: string;
   isPremium?: boolean;
-  readingTime?: number | null;
-  author?: { data?: { id: number } } | number | null;
+  show?: { data?: { id: number } } | number | null;
   tags?: { data?: Array<{ id: number }> } | number[];
   partners?: { data?: Array<{ id: number }> } | number[];
   seo?: SEOData & {
     metaImage?: { data?: { id: number; attributes?: { url?: string } } } | { id: number; url: string } | null;
   } | null;
   attributes?: Partial<
-    ArticleFormData & {
-      author?: { data?: { id: number } };
+    VideoEpisodeFormData & {
+      show?: { data?: { id: number } };
       tags?: { data?: Array<{ id: number }> };
       partners?: { data?: Array<{ id: number }> };
       heroImage?: { data?: { id: number; attributes?: { url?: string } } };
@@ -59,110 +64,108 @@ interface ArticleData {
   >;
 }
 
-interface ArticleResponse {
-  data: ArticleData;
+interface VideoEpisodeResponse {
+  data: VideoEpisodeData;
   meta?: any;
 }
 
-export default function EditArticlePage() {
+export default function EditVideoEpisodePage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [error, setError] = useState('');
 
-      const { data, isLoading } = useQuery<ArticleResponse>({
-    queryKey: ['articles', id],
-    queryFn: () =>
-      apiClient.findOne<ArticleData>('articles', id!, {
-        populate: ['heroImage', 'author', 'tags', 'partners', 'seo.metaImage'],
-      }) as Promise<ArticleResponse>,
+  const { data, isLoading } = useQuery<VideoEpisodeResponse>({
+    queryKey: ['video-episodes', id],
+    queryFn: () => {
+      console.log('🎬 Fetching video episode with endpoint:', API_ENDPOINTS.videoEpisodes, 'id:', id);
+      return apiClient.findOne<VideoEpisodeData>(API_ENDPOINTS.videoEpisodes, id!, {
+        populate: ['heroImage', 'show', 'tags', 'partners', 'seo.metaImage'],
+      }) as Promise<VideoEpisodeResponse>;
+    },
     enabled: !!id,
   });
 
   const mutation = useMutation({
-    mutationFn: async (formData: {
-      title: string;
-      slug: string;
-      excerpt: string;
-      body: string;
-      heroImage: { id: number; url: string } | null;
-      publishDate: string;
-      isPremium: boolean;
-      readingTime: number | null;
-      author: number | null;
-      tags: number[];
-      partners: number[];
-      seo: {
-        metaTitle?: string;
-        metaDescription?: string;
-        keywords?: string;
-        metaImage?: { id: number; url: string } | null;
-        preventIndexing?: boolean;
-      } | null;
-    }) => {
-      // IMPORTANTE: Preservare i dati esistenti per evitare cancellazioni accidentali
-      // Durante un UPDATE, Strapi sostituisce completamente l'entità se usiamo PUT
-      // Dobbiamo assicurarci di includere tutti i campi necessari
-      const currentArticle = data?.data;
-      const currentAttrs = currentArticle?.attributes || currentArticle;
+    mutationFn: async (formData: VideoEpisodeFormData) => {
+      const currentEpisode = data?.data;
+      const currentAttrs = currentEpisode?.attributes || currentEpisode;
 
-      // Format data for Strapi API
       const updateData: Record<string, unknown> = {
-        title: formData.title,
-        slug: formData.slug,
-        excerpt: formData.excerpt || null,
-        body: formData.body,
-        publishDate: formData.publishDate || null,
-        isPremium: formData.isPremium,
-        readingTime: formData.readingTime || null,
+        [VIDEO_EPISODE_FIELDS.title]: formData.title,
+        [VIDEO_EPISODE_FIELDS.slug]: formData.slug,
+        [VIDEO_EPISODE_FIELDS.videoUrl]: formData.videoUrl,
+        // Invia isPremium esplicitamente come false se non è true
+        [VIDEO_EPISODE_FIELDS.isPremium]: formData.isPremium === true,
       };
 
-      // Preserva heroImage esistente se non specificato nel form
+      // Aggiungi synopsis solo se presente
+      if (formData.synopsis && formData.synopsis.trim()) {
+        updateData[VIDEO_EPISODE_FIELDS.synopsis] = formData.synopsis;
+      }
+
+      // Aggiungi body solo se presente
+      if (formData.body && formData.body.trim()) {
+        updateData[VIDEO_EPISODE_FIELDS.body] = formData.body;
+      }
+
+      // PublishDate
+      if (formData.publishDate) {
+        updateData[VIDEO_EPISODE_FIELDS.publishDate] = formData.publishDate;
+      }
+
+      // HeroImage
       if (formData.heroImage) {
-        updateData.heroImage = formData.heroImage.id;
+        updateData[VIDEO_EPISODE_FIELDS.heroImage] = formData.heroImage.id;
       } else {
-        // Se il form ha null esplicitamente, rimuovi l'immagine
-        // Altrimenti preserva quella esistente
         const currentHeroImage = currentAttrs?.heroImage;
         if (currentHeroImage) {
-          // Preserva l'immagine esistente se non è stata rimossa esplicitamente
           const heroImageId = currentHeroImage?.data?.id ?? currentHeroImage?.id;
           if (heroImageId) {
-            updateData.heroImage = heroImageId;
+            updateData[VIDEO_EPISODE_FIELDS.heroImage] = heroImageId;
           } else {
-            updateData.heroImage = null;
+            updateData[VIDEO_EPISODE_FIELDS.heroImage] = null;
           }
         } else {
-          updateData.heroImage = null;
+          updateData[VIDEO_EPISODE_FIELDS.heroImage] = null;
         }
       }
 
-      // Preserva author esistente se non specificato
-      if (formData.author !== null && formData.author !== undefined) {
-        updateData.author = formData.author;
+      // VideoOrientation
+      if (formData.videoOrientation) {
+        updateData[VIDEO_EPISODE_FIELDS.videoOrientation] = formData.videoOrientation;
+      }
+
+      // DurationSeconds
+      if (formData.durationSeconds !== null && formData.durationSeconds !== undefined) {
+        updateData[VIDEO_EPISODE_FIELDS.durationSeconds] = formData.durationSeconds;
+      }
+
+      // Show
+      if (formData.show !== null && formData.show !== undefined) {
+        updateData[VIDEO_EPISODE_FIELDS.show] = formData.show;
       } else {
-        const currentAuthor = currentAttrs?.author;
-        if (currentAuthor) {
-          const authorId = typeof currentAuthor === 'object' && 'data' in currentAuthor && currentAuthor.data
-            ? (currentAuthor as { data: { id: number } }).data.id
-            : typeof currentAuthor === 'number'
-            ? currentAuthor
+        const currentShow = currentAttrs?.show;
+        if (currentShow) {
+          const showId = typeof currentShow === 'object' && 'data' in currentShow && currentShow.data
+            ? (currentShow as { data: { id: number } }).data.id
+            : typeof currentShow === 'number'
+            ? currentShow
             : null;
-          if (authorId) {
-            updateData.author = authorId;
+          if (showId) {
+            updateData[VIDEO_EPISODE_FIELDS.show] = showId;
           } else {
-            updateData.author = null;
+            updateData[VIDEO_EPISODE_FIELDS.show] = null;
           }
         } else {
-          updateData.author = null;
+          updateData[VIDEO_EPISODE_FIELDS.show] = null;
         }
       }
 
-      // Preserva tags e partners esistenti se il form è vuoto (potrebbe essere una perdita accidentale)
+      // Tags
       if (formData.tags.length > 0) {
-        updateData.tags = formData.tags;
+        updateData[VIDEO_EPISODE_FIELDS.tags] = formData.tags;
       } else {
-        // Se il form è vuoto ma ci sono tag esistenti, preservali per sicurezza
         const currentTags = currentAttrs?.tags;
         if (currentTags) {
           const tagIds = Array.isArray(currentTags) && currentTags.length > 0
@@ -170,16 +173,16 @@ export default function EditArticlePage() {
                 typeof tag === 'object' && 'id' in tag ? tag.id : tag
               ).filter((id: any): id is number => typeof id === 'number')
             : [];
-          updateData.tags = tagIds.length > 0 ? tagIds : [];
+          updateData[VIDEO_EPISODE_FIELDS.tags] = tagIds.length > 0 ? tagIds : [];
         } else {
-          updateData.tags = [];
+          updateData[VIDEO_EPISODE_FIELDS.tags] = [];
         }
       }
 
+      // Partners
       if (formData.partners.length > 0) {
-        updateData.partners = formData.partners;
+        updateData[VIDEO_EPISODE_FIELDS.partners] = formData.partners;
       } else {
-        // Se il form è vuoto ma ci sono partner esistenti, preservali per sicurezza
         const currentPartners = currentAttrs?.partners;
         if (currentPartners) {
           const partnerIds = Array.isArray(currentPartners) && currentPartners.length > 0
@@ -187,13 +190,13 @@ export default function EditArticlePage() {
                 typeof partner === 'object' && 'id' in partner ? partner.id : partner
               ).filter((id: any): id is number => typeof id === 'number')
             : [];
-          updateData.partners = partnerIds.length > 0 ? partnerIds : [];
+          updateData[VIDEO_EPISODE_FIELDS.partners] = partnerIds.length > 0 ? partnerIds : [];
         } else {
-          updateData.partners = [];
+          updateData[VIDEO_EPISODE_FIELDS.partners] = [];
         }
       }
 
-      // Preserva SEO esistente se non specificato
+      // SEO
       if (formData.seo) {
         const seoData: Record<string, unknown> = {};
         if (formData.seo.metaTitle) seoData.metaTitle = formData.seo.metaTitle;
@@ -207,9 +210,8 @@ export default function EditArticlePage() {
         if (formData.seo.preventIndexing !== undefined) {
           seoData.preventIndexing = formData.seo.preventIndexing;
         }
-        updateData.seo = seoData;
+        updateData[VIDEO_EPISODE_FIELDS.seo] = seoData;
       } else {
-        // Se SEO non è nel form, preserva quello esistente
         const currentSeo = currentAttrs?.seo;
         if (currentSeo && typeof currentSeo === 'object') {
           const seoData: Record<string, unknown> = {};
@@ -217,7 +219,6 @@ export default function EditArticlePage() {
           if ('metaDescription' in currentSeo) seoData.metaDescription = currentSeo.metaDescription;
           if ('keywords' in currentSeo) seoData.keywords = currentSeo.keywords;
           if ('preventIndexing' in currentSeo) seoData.preventIndexing = currentSeo.preventIndexing;
-          // Preserva metaImage se esiste
           const currentMetaImage = (currentSeo as any)?.metaImage;
           if (currentMetaImage) {
             const metaImageId = currentMetaImage?.data?.id ?? currentMetaImage?.id;
@@ -226,19 +227,20 @@ export default function EditArticlePage() {
             }
           }
           if (Object.keys(seoData).length > 0) {
-            updateData.seo = seoData;
+            updateData[VIDEO_EPISODE_FIELDS.seo] = seoData;
           } else {
-            updateData.seo = null;
+            updateData[VIDEO_EPISODE_FIELDS.seo] = null;
           }
         } else {
-          updateData.seo = null;
+          updateData[VIDEO_EPISODE_FIELDS.seo] = null;
         }
       }
 
-      return apiClient.update('articles', id!, updateData);
+      console.log('🎬 Updating video episode with endpoint:', API_ENDPOINTS.videoEpisodes, 'id:', id);
+      return apiClient.update(API_ENDPOINTS.videoEpisodes, id!, updateData);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['articles'] });
+      queryClient.invalidateQueries({ queryKey: ['video-episodes'] });
       navigate('/');
     },
     onError: (err: unknown) => {
@@ -250,7 +252,7 @@ export default function EditArticlePage() {
     },
   });
 
-  const handleSubmit = async (formData: ArticleFormData) => {
+  const handleSubmit = async (formData: VideoEpisodeFormData) => {
     setError('');
     await mutation.mutateAsync(formData);
   };
@@ -269,10 +271,10 @@ export default function EditArticlePage() {
         <div className="card text-center py-12">
           <AlertCircle className="mx-auto text-gray-400 mb-4" size={48} />
           <h2 className="text-xl font-semibold text-gray-900 mb-2">
-            Articolo non trovato
+            Episodio video non trovato
           </h2>
           <p className="text-gray-600 mb-4">
-            L'articolo che stai cercando non esiste o è stato eliminato.
+            L'episodio video che stai cercando non esiste o è stato eliminato.
           </p>
           <Link to="/" className="btn-primary inline-block">
             Torna alla Dashboard
@@ -292,9 +294,9 @@ export default function EditArticlePage() {
           <ArrowLeft size={16} />
           <span>Torna alla Dashboard</span>
         </Link>
-        <h1 className="text-2xl font-bold text-gray-900">Modifica Articolo</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Modifica Episodio Video</h1>
         <p className="text-gray-600 mt-1">
-          Modifica i dettagli dell'articolo
+          Modifica i dettagli dell'episodio video
         </p>
       </div>
 
@@ -306,25 +308,27 @@ export default function EditArticlePage() {
       )}
 
       <div className="card">
-        <ArticleForm
+        <VideoEpisodeForm
           initialData={
             data.data.attributes
-              ? (data.data as { id: number; attributes: Partial<ArticleFormData & { author?: { data?: { id: number } }; tags?: { data?: Array<{ id: number }> }; partners?: { data?: Array<{ id: number }> }; heroImage?: { data?: { id: number; attributes?: { url?: string } } }; seo?: SEOData & { metaImage?: { data?: { id: number; attributes?: { url?: string } } } }; }> })
+              ? (data.data as { id: number; attributes: Partial<VideoEpisodeFormData & { show?: { data?: { id: number } }; tags?: { data?: Array<{ id: number }> }; partners?: { data?: Array<{ id: number }> }; heroImage?: { data?: { id: number; attributes?: { url?: string } } }; seo?: SEOData & { metaImage?: { data?: { id: number; attributes?: { url?: string } } }; }; }> })
               : {
                   id: data.data.id,
                   attributes: {
                     title: data.data.title,
                     slug: data.data.slug,
-                    excerpt: data.data.excerpt,
+                    synopsis: data.data.synopsis,
                     body: data.data.body,
+                    videoUrl: data.data.videoUrl,
+                    videoOrientation: data.data.videoOrientation,
+                    durationSeconds: data.data.durationSeconds,
                     heroImage: data.data.heroImage,
                     publishDate: data.data.publishDate,
                     isPremium: data.data.isPremium,
-                    readingTime: data.data.readingTime,
-                    author: typeof data.data.author === 'object' && data.data.author && 'data' in data.data.author && data.data.author.data
-                      ? { data: { id: (data.data.author as { data: { id: number } }).data.id } }
-                      : typeof data.data.author === 'number'
-                      ? { data: { id: data.data.author } }
+                    show: typeof data.data.show === 'object' && data.data.show && 'data' in data.data.show && data.data.show.data
+                      ? { data: { id: (data.data.show as { data: { id: number } }).data.id } }
+                      : typeof data.data.show === 'number'
+                      ? { data: { id: data.data.show } }
                       : undefined,
                     tags: Array.isArray(data.data.tags) && data.data.tags.length > 0 && typeof data.data.tags[0] === 'object'
                       ? { data: (data.data.tags as unknown as Array<{ id: number }>).map(t => ({ id: t.id })) }
@@ -338,7 +342,7 @@ export default function EditArticlePage() {
                       : undefined,
                     seo: data.data.seo,
                   },
-                } as { id: number; attributes: Partial<ArticleFormData & { author?: { data?: { id: number } }; tags?: { data?: Array<{ id: number }> }; partners?: { data?: Array<{ id: number }> }; heroImage?: { data?: { id: number; attributes?: { url?: string } } }; seo?: SEOData & { metaImage?: { data?: { id: number; attributes?: { url?: string } } } }; }> }
+                } as { id: number; attributes: Partial<VideoEpisodeFormData & { show?: { data?: { id: number } }; tags?: { data?: Array<{ id: number }> }; partners?: { data?: Array<{ id: number }> }; heroImage?: { data?: { id: number; attributes?: { url?: string } } }; seo?: SEOData & { metaImage?: { data?: { id: number; attributes?: { url?: string } } }; }; }> }
           }
           onSubmit={handleSubmit}
           isSubmitting={mutation.isPending}
