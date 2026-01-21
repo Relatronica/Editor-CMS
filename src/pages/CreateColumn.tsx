@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../lib/api';
 import ColumnForm from '../components/forms/ColumnForm';
 import { ArrowLeft, AlertCircle } from 'lucide-react';
@@ -8,6 +8,7 @@ import { Link } from 'react-router-dom';
 
 export default function CreateColumnPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [error, setError] = useState('');
 
   const mutation = useMutation({
@@ -73,6 +74,10 @@ export default function CreateColumnPage() {
       return apiClient.create('columns', data);
     },
     onSuccess: () => {
+      // Invalidate calendar query to refresh scheduled content
+      queryClient.invalidateQueries({ 
+        queryKey: ['columns', 'scheduled']
+      });
       navigate('/');
     },
     onError: (err: unknown) => {

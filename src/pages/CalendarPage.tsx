@@ -300,14 +300,12 @@ export default function CalendarPage() {
   };
 
   const handleDayClick = (day: Date) => {
-    const dayKey = format(day, 'yyyy-MM-dd');
-    const dayContent = contentByDay[dayKey] || [];
-    
-    // Se il giorno ha contenuti, selezionalo, altrimenti deseleziona
-    if (dayContent.length > 0) {
-      setSelectedDay(day);
-    } else {
+    // Permetti la selezione di qualsiasi giorno, anche senza contenuti
+    // Se il giorno selezionato è già quello corrente, deselezionalo
+    if (selectedDay && isSameDay(day, selectedDay)) {
       setSelectedDay(null);
+    } else {
+      setSelectedDay(day);
     }
   };
 
@@ -415,13 +413,13 @@ export default function CalendarPage() {
                     key={dayKey}
                     type="button"
                     onClick={() => handleDayClick(day)}
-                    className={`aspect-square border rounded-lg p-2 flex flex-col items-start justify-between transition-colors relative ${
+                    className={`aspect-square border rounded-lg p-2 flex flex-col items-start justify-between transition-colors relative cursor-pointer ${
                       isSelected
                         ? 'bg-primary-100 border-primary-400 ring-2 ring-primary-300'
                         : isToday
                         ? 'bg-primary-50 border-primary-300'
                         : 'bg-white border-gray-200 hover:border-primary-200 hover:bg-gray-50'
-                    } ${!isCurrentMonth ? 'opacity-50' : ''} ${dayContent.length > 0 ? 'cursor-pointer' : 'cursor-default'}`}
+                    } ${!isCurrentMonth ? 'opacity-50' : ''}`}
                   >
                     <div
                       className={`text-sm font-medium ${

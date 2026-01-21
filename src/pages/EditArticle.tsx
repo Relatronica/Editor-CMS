@@ -239,6 +239,10 @@ export default function EditArticlePage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['articles'] });
+      // Invalidate calendar query to refresh scheduled content
+      queryClient.invalidateQueries({ 
+        queryKey: ['articles', 'scheduled']
+      });
       navigate('/');
     },
     onError: (err: unknown) => {

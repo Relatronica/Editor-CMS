@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../lib/api';
 import ArticleForm from '../components/forms/ArticleForm';
 import { ArrowLeft, AlertCircle } from 'lucide-react';
 
 export default function CreateArticlePage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [error, setError] = useState('');
 
   const mutation = useMutation({
@@ -106,6 +107,10 @@ export default function CreateArticlePage() {
       return apiClient.create('articles', data);
     },
     onSuccess: () => {
+      // Invalidate calendar query to refresh scheduled content
+      queryClient.invalidateQueries({ 
+        queryKey: ['articles', 'scheduled']
+      });
       navigate('/');
     },
     onError: (err: unknown) => {

@@ -175,6 +175,10 @@ export default function EditColumnPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['columns'] });
+      // Invalidate calendar query to refresh scheduled content
+      queryClient.invalidateQueries({ 
+        queryKey: ['columns', 'scheduled']
+      });
       navigate('/');
     },
     onError: (err: unknown) => {
