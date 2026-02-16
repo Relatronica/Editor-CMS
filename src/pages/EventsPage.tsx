@@ -9,7 +9,6 @@ import {
   ArrowLeft,
   Loader2,
   Globe,
-  ExternalLink,
 } from 'lucide-react';
 import { format, isPast, isFuture, isWithinInterval } from 'date-fns';
 import { it } from 'date-fns/locale';
@@ -45,7 +44,6 @@ export default function EventsPage() {
 
   const events = data?.data || [];
 
-  const now = new Date();
   const upcomingEvents = events.filter((ev) => {
     const start = ev.attributes?.startDate || ev.startDate;
     const end = ev.attributes?.endDate || ev.endDate;
