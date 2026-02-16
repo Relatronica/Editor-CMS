@@ -69,29 +69,30 @@ export default function TutorialTour({
       locale={locale}
       styles={{
         options: {
-          primaryColor: '#2563eb', // primary-600
+          primaryColor: '#4f46e5',
           zIndex: 10000,
         },
         tooltip: {
-          borderRadius: '0.5rem',
+          borderRadius: '1rem',
           padding: '1.5rem',
+          boxShadow: '0 10px 40px -15px rgba(0, 0, 0, 0.1)',
         },
         tooltipContainer: {
           textAlign: 'left',
         },
         buttonNext: {
-          backgroundColor: '#2563eb',
-          borderRadius: '0.375rem',
-          padding: '0.5rem 1rem',
+          backgroundColor: '#4f46e5',
+          borderRadius: '0.75rem',
+          padding: '0.625rem 1.25rem',
           fontSize: '0.875rem',
-          fontWeight: '500',
+          fontWeight: '600',
         },
         buttonBack: {
-          color: '#4b5563',
+          color: '#64748b',
           marginRight: '0.5rem',
         },
         buttonSkip: {
-          color: '#6b7280',
+          color: '#94a3b8',
           fontSize: '0.875rem',
         },
       }}

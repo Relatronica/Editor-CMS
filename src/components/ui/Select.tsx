@@ -27,9 +27,8 @@ export default function Select({
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Debug logging
   useEffect(() => {
-    console.log('🔍 Select component received:', {
+    console.log('Select component received:', {
       label,
       optionsCount: options.length,
       options,
@@ -39,7 +38,6 @@ export default function Select({
   }, [options, value, label]);
 
   const selectedOption = options.find((opt) => {
-    // Handle both string and number comparisons
     return String(opt.value) === String(value) || opt.value === value;
   });
 
@@ -60,14 +58,12 @@ export default function Select({
   }, [isOpen]);
 
   const handleSelect = (optionValue: string | number | null) => {
-    console.log('🎯 Select.handleSelect called with:', {
+    console.log('Select.handleSelect called with:', {
       optionValue,
       optionType: typeof optionValue,
       optionLabel: options.find(opt => opt.value === optionValue)?.label,
     });
-    // Close dropdown first
     setIsOpen(false);
-    // Then trigger onChange with a small delay to ensure dropdown is closed
     setTimeout(() => {
       onChange(optionValue);
     }, 50);
@@ -97,32 +93,32 @@ export default function Select({
                 <img
                   src={selectedOption.avatar}
                   alt={selectedOption.label}
-                  className="w-6 h-6 rounded-full object-cover flex-shrink-0"
+                  className="w-6 h-6 rounded-full object-cover flex-shrink-0 ring-2 ring-surface-200 dark:ring-surface-700"
                   onError={(e) => {
                     (e.target as HTMLImageElement).style.display = 'none';
                   }}
                 />
               ) : (
-                <div className="w-6 h-6 rounded-full bg-gray-200 flex-shrink-0 flex items-center justify-center">
-                  <span className="text-xs text-gray-500">
+                <div className="w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900/40 flex-shrink-0 flex items-center justify-center">
+                  <span className="text-xs font-medium text-primary-700 dark:text-primary-300">
                     {selectedOption.label.charAt(0).toUpperCase()}
                   </span>
                 </div>
               )}
-              <span className="truncate">{selectedOption.label}</span>
+              <span className="truncate text-surface-900 dark:text-surface-100">{selectedOption.label}</span>
             </>
           ) : (
-            <span className="text-gray-500">{placeholder}</span>
+            <span className="text-surface-400 dark:text-surface-500">{placeholder}</span>
           )}
         </div>
         <ChevronDown
           size={16}
-          className={`text-gray-400 flex-shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          className={`text-surface-400 flex-shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
         />
       </button>
 
       {isOpen && (
-        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-auto">
+        <div className="absolute z-50 w-full mt-1.5 bg-white dark:bg-surface-800 border border-surface-200 dark:border-surface-700 rounded-xl shadow-soft-lg dark:shadow-dark-soft max-h-60 overflow-auto animate-slide-down">
           <button
             type="button"
             onClick={(e) => {
@@ -130,14 +126,14 @@ export default function Select({
               e.stopPropagation();
               handleSelect(null);
             }}
-            className={`w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-2 ${
-              !value ? 'bg-primary-50' : ''
+            className={`w-full px-4 py-2.5 text-left hover:bg-surface-50 dark:hover:bg-surface-700/50 flex items-center gap-2 transition-colors ${
+              !value ? 'bg-primary-50 dark:bg-primary-900/20' : ''
             }`}
           >
-            <span className="text-gray-500">{placeholder}</span>
+            <span className="text-surface-400 dark:text-surface-500">{placeholder}</span>
           </button>
           {options.length === 0 ? (
-            <div className="px-4 py-2 text-sm text-gray-500">
+            <div className="px-4 py-3 text-sm text-surface-400 dark:text-surface-500">
               Nessun autore disponibile
             </div>
           ) : (
@@ -149,12 +145,11 @@ export default function Select({
                   e.preventDefault();
                   e.stopPropagation();
                   e.nativeEvent.stopImmediatePropagation();
-                  console.log('🖱️ Select option clicked:', {
+                  console.log('Select option clicked:', {
                     value: option.value,
                     valueType: typeof option.value,
                     label: option.label,
                   });
-                  // Small delay to ensure event is fully handled
                   requestAnimationFrame(() => {
                     handleSelect(option.value);
                   });
@@ -167,27 +162,27 @@ export default function Select({
                   e.preventDefault();
                   e.stopPropagation();
                 }}
-                className={`w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-2 ${
-                  (String(value) === String(option.value) || value === option.value) ? 'bg-primary-50' : ''
+                className={`w-full px-4 py-2.5 text-left hover:bg-surface-50 dark:hover:bg-surface-700/50 flex items-center gap-2 transition-colors ${
+                  (String(value) === String(option.value) || value === option.value) ? 'bg-primary-50 dark:bg-primary-900/20' : ''
                 }`}
               >
                 {option.avatar ? (
                   <img
                     src={option.avatar}
                     alt={option.label}
-                    className="w-6 h-6 rounded-full object-cover flex-shrink-0"
+                    className="w-6 h-6 rounded-full object-cover flex-shrink-0 ring-2 ring-surface-200 dark:ring-surface-700"
                     onError={(e) => {
                       (e.target as HTMLImageElement).style.display = 'none';
                     }}
                   />
                 ) : (
-                  <div className="w-6 h-6 rounded-full bg-gray-200 flex-shrink-0 flex items-center justify-center">
-                    <span className="text-xs text-gray-500">
+                  <div className="w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900/40 flex-shrink-0 flex items-center justify-center">
+                    <span className="text-xs font-medium text-primary-700 dark:text-primary-300">
                       {option.label.charAt(0).toUpperCase()}
                     </span>
                   </div>
                 )}
-                <span className="truncate">{option.label}</span>
+                <span className="truncate text-surface-900 dark:text-surface-100">{option.label}</span>
               </button>
             ))
           )}

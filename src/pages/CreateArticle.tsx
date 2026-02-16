@@ -1,134 +1,22 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '../lib/api';
 import ArticleForm from '../components/forms/ArticleForm';
 import { ArrowLeft, AlertCircle } from 'lucide-react';
+import { useCreateArticle } from '../hooks/useArticles';
 
 export default function CreateArticlePage() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const [error, setError] = useState('');
 
-  const mutation = useMutation({
-    mutationFn: async (formData: {
-      title: string;
-      slug: string;
-      excerpt: string;
-      body: string;
-      heroImage: { id: number; url: string } | null;
-      publishDate: string;
-      isPremium: boolean;
-      readingTime: number | null;
-      author: number | null;
-      tags: number[];
-      partners: number[];
-      seo: {
-        metaTitle?: string;
-        metaDescription?: string;
-        keywords?: string;
-        metaImage?: { id: number; url: string } | null;
-        preventIndexing?: boolean;
-      } | null;
-    }) => {
-      // Verifica se esiste già un articolo con lo stesso slug
-      // Questo previene sovrascritture accidentali durante importazioni
-      try {
-        const existingArticles = await apiClient.find<{ id: number; attributes?: { slug?: string }; slug?: string }>('articles', {
-          filters: {
-            slug: { $eq: formData.slug },
-          },
-          pagination: { limit: 1 },
-        });
-
-        if (existingArticles?.data && existingArticles.data.length > 0) {
-          const existingArticle = existingArticles.data[0];
-          const existingSlug = existingArticle.attributes?.slug || existingArticle.slug;
-          if (existingSlug === formData.slug) {
-            throw new Error(
-              `Esiste già un articolo con lo slug "${formData.slug}". ` +
-              `Modifica lo slug o modifica l'articolo esistente (ID: ${existingArticle.id}).`
-            );
-          }
-        }
-      } catch (error) {
-        // Se l'errore è già il nostro messaggio personalizzato, rilanciamolo
-        if (error instanceof Error && error.message.includes('Esiste già un articolo')) {
-          throw error;
-        }
-        // Altrimenti, potrebbe essere un errore di rete o altro - continuiamo comunque
-        // per non bloccare la creazione in caso di problemi temporanei
-        console.warn('Errore durante la verifica dello slug esistente:', error);
-      }
-
-      // Format data for Strapi API
-      const data: Record<string, unknown> = {
-        title: formData.title,
-        slug: formData.slug,
-        excerpt: formData.excerpt || null,
-        body: formData.body,
-        publishDate: formData.publishDate || null,
-        isPremium: formData.isPremium,
-        readingTime: formData.readingTime || null,
-      };
-
-      if (formData.heroImage) {
-        data.heroImage = formData.heroImage.id;
-      }
-
-      if (formData.author) {
-        data.author = formData.author;
-      }
-
-      if (formData.tags.length > 0) {
-        data.tags = formData.tags;
-      }
-
-      if (formData.partners.length > 0) {
-        data.partners = formData.partners;
-      }
-
-      if (formData.seo) {
-        const seoData: Record<string, unknown> = {};
-        if (formData.seo.metaTitle) seoData.metaTitle = formData.seo.metaTitle;
-        if (formData.seo.metaDescription) seoData.metaDescription = formData.seo.metaDescription;
-        if (formData.seo.keywords) seoData.keywords = formData.seo.keywords;
-        if (formData.seo.metaImage) {
-          seoData.metaImage = formData.seo.metaImage.id;
-        }
-        if (formData.seo.preventIndexing !== undefined) {
-          seoData.preventIndexing = formData.seo.preventIndexing;
-        }
-        if (Object.keys(seoData).length > 0) {
-          data.seo = seoData;
-        }
-      }
-
-      return apiClient.create('articles', data);
-    },
-    onSuccess: () => {
-      // Invalidate calendar query to refresh scheduled content
-      queryClient.invalidateQueries({ 
-        queryKey: ['articles', 'scheduled']
-      });
-      navigate('/');
-    },
-    onError: (err: unknown) => {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Errore durante la creazione. Riprova.'
-      );
-    },
-  });
+  const mutation = useCreateArticle();
 
   const handleSubmit = async (formData: {
     title: string;
     slug: string;
     excerpt: string;
-      body: string;
-      heroImage: { id: number; url: string } | null;
-      publishDate: string;
+    body: string;
+    heroImage: { id: number; url: string } | null;
+    publishDate: string;
     isPremium: boolean;
     readingTime: number | null;
     author: number | null;
@@ -143,7 +31,16 @@ export default function CreateArticlePage() {
     } | null;
   }) => {
     setError('');
-    await mutation.mutateAsync(formData);
+    try {
+      await mutation.mutateAsync(formData);
+      navigate('/');
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Errore durante la creazione. Riprova.'
+      );
+    }
   };
 
   return (
@@ -151,21 +48,21 @@ export default function CreateArticlePage() {
       <div className="mb-6">
         <Link
           to="/"
-          className="inline-flex items-center space-x-2 text-gray-600 hover:text-gray-900 mb-4"
+          className="inline-flex items-center space-x-2 text-surface-500 dark:text-surface-400 hover:text-surface-700 dark:hover:text-surface-200 mb-4"
         >
           <ArrowLeft size={16} />
           <span>Torna alla Dashboard</span>
         </Link>
-        <h1 className="text-2xl font-bold text-gray-900">Nuovo Articolo</h1>
-        <p className="text-gray-600 mt-1">
+        <h1 className="text-2xl font-bold text-surface-900 dark:text-white tracking-tight">Nuovo Articolo</h1>
+        <p className="text-surface-500 dark:text-surface-400 mt-1">
           Crea un nuovo articolo editoriale
         </p>
       </div>
 
       {error && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start space-x-2">
-          <AlertCircle className="text-red-600 mt-0.5" size={20} />
-          <p className="text-sm text-red-800">{error}</p>
+        <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-xl flex items-start space-x-2">
+          <AlertCircle className="text-red-500 dark:text-red-400 mt-0.5" size={20} />
+          <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
         </div>
       )}
 

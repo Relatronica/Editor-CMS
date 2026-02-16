@@ -21,4 +21,5 @@ export const API_ENDPOINTS = {
   // - 'videoepisodes' (senza trattino)
   // - 'video_episodes' (con underscore)
   videoEpisodes: 'video-episodes', // <-- MODIFICA QUESTO SE NECESSARIO
+  events: 'events',
 } as const;

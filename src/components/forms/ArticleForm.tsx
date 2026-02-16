@@ -95,7 +95,7 @@ export default function ArticleForm({
       content: (
         <div>
           <h3 className="text-lg font-semibold mb-2">Titolo dell'articolo</h3>
-          <p className="text-sm text-gray-600 mb-2">
+          <p className="text-sm text-surface-500 mb-2">
             Il titolo è obbligatorio e viene visualizzato come intestazione principale dell'articolo.
             <strong className="block mt-1">💡 Suggerimento:</strong> Quando inserisci il titolo, lo slug viene generato automaticamente in base al titolo.
           </p>
@@ -108,11 +108,11 @@ export default function ArticleForm({
       content: (
         <div>
           <h3 className="text-lg font-semibold mb-2">Slug (URL)</h3>
-          <p className="text-sm text-gray-600 mb-2">
+          <p className="text-sm text-surface-500 mb-2">
             Lo slug è l'URL dell'articolo (es: "mio-articolo"). Viene generato automaticamente dal titolo,
             ma puoi modificarlo manualmente se necessario.
           </p>
-          <p className="text-sm text-gray-500 italic">
+          <p className="text-sm text-surface-400 italic">
             Importante: usa solo lettere minuscole, numeri e trattini.
           </p>
         </div>
@@ -124,7 +124,7 @@ export default function ArticleForm({
       content: (
         <div>
           <h3 className="text-lg font-semibold mb-2">Estratto</h3>
-          <p className="text-sm text-gray-600 mb-2">
+          <p className="text-sm text-surface-500 mb-2">
             L'estratto è una breve descrizione dell'articolo (max 300 caratteri).
             Viene utilizzato come anteprima nelle liste di articoli e nelle meta description SEO.
           </p>
@@ -137,16 +137,16 @@ export default function ArticleForm({
       content: (
         <div>
           <h3 className="text-lg font-semibold mb-2">Editor Rich Text</h3>
-          <p className="text-sm text-gray-600 mb-2">
+          <p className="text-sm text-surface-500 mb-2">
             Questo è l'editor per il contenuto principale dell'articolo. La toolbar ti permette di:
           </p>
-          <ul className="text-sm text-gray-600 list-disc list-inside mb-2 space-y-1">
+          <ul className="text-sm text-surface-500 list-disc list-inside mb-2 space-y-1">
             <li><strong>Grassetto</strong> e <em>Corsivo</em></li>
             <li>Liste puntate e numerate</li>
             <li>Collegamenti (link)</li>
             <li>Intestazioni (H2, H3)</li>
           </ul>
-          <p className="text-sm text-gray-500 italic">
+          <p className="text-sm text-surface-400 italic">
             Il contenuto è obbligatorio e supporta Markdown.
           </p>
         </div>
@@ -158,11 +158,11 @@ export default function ArticleForm({
       content: (
         <div>
           <h3 className="text-lg font-semibold mb-2">Immagine Hero</h3>
-          <p className="text-sm text-gray-600 mb-2">
+          <p className="text-sm text-surface-500 mb-2">
             L'immagine hero è l'immagine principale dell'articolo, visualizzata in evidenza.
             Puoi caricare un'immagine dal tuo computer o selezionarne una già presente nel sistema.
           </p>
-          <p className="text-sm text-gray-500 italic">
+          <p className="text-sm text-surface-400 italic">
             Consiglio: usa immagini di alta qualità in formato ottimizzato (WebP o JPG).
           </p>
         </div>
@@ -174,7 +174,7 @@ export default function ArticleForm({
       content: (
         <div>
           <h3 className="text-lg font-semibold mb-2">Autore</h3>
-          <p className="text-sm text-gray-600 mb-2">
+          <p className="text-sm text-surface-500 mb-2">
             Seleziona l'autore dell'articolo dalla lista. Gli autori devono essere creati prima
             di poter essere assegnati agli articoli.
           </p>
@@ -187,7 +187,7 @@ export default function ArticleForm({
       content: (
         <div>
           <h3 className="text-lg font-semibold mb-2">Tag</h3>
-          <p className="text-sm text-gray-600 mb-2">
+          <p className="text-sm text-surface-500 mb-2">
             I tag aiutano a categorizzare e organizzare gli articoli. Puoi selezionare più tag
             per classificare il contenuto per argomento, tema o categoria.
           </p>
@@ -200,10 +200,10 @@ export default function ArticleForm({
       content: (
         <div>
           <h3 className="text-lg font-semibold mb-2">Metadata e Pubblicazione</h3>
-          <p className="text-sm text-gray-600 mb-2">
+          <p className="text-sm text-surface-500 mb-2">
             Qui puoi impostare:
           </p>
-          <ul className="text-sm text-gray-600 list-disc list-inside mb-2 space-y-1">
+          <ul className="text-sm text-surface-500 list-disc list-inside mb-2 space-y-1">
             <li><strong>Data di pubblicazione:</strong> quando l'articolo verrà pubblicato</li>
             <li><strong>Contenuto Premium:</strong> marca l'articolo come contenuto premium (a pagamento)</li>
             <li><strong>Tempo di lettura:</strong> stima in minuti (aiuta gli utenti)</li>
@@ -217,17 +217,17 @@ export default function ArticleForm({
       content: (
         <div>
           <h3 className="text-lg font-semibold mb-2">Ottimizzazione SEO</h3>
-          <p className="text-sm text-gray-600 mb-2">
+          <p className="text-sm text-surface-500 mb-2">
             La sezione SEO è fondamentale per la visibilità sui motori di ricerca:
           </p>
-          <ul className="text-sm text-gray-600 list-disc list-inside mb-2 space-y-1">
+          <ul className="text-sm text-surface-500 list-disc list-inside mb-2 space-y-1">
             <li><strong>Meta Title:</strong> titolo per i motori (max 60 caratteri)</li>
             <li><strong>Meta Description:</strong> descrizione per i risultati di ricerca (max 160 caratteri)</li>
             <li><strong>Keywords:</strong> parole chiave separate da virgole</li>
             <li><strong>Meta Image:</strong> immagine per condivisioni social (Open Graph)</li>
             <li><strong>Prevent Indexing:</strong> impedisci ai motori di indicizzare questa pagina</li>
           </ul>
-          <p className="text-sm text-gray-500 italic mt-2">
+          <p className="text-sm text-surface-400 italic mt-2">
             💡 Suggerimento: se lasci vuoto, il sistema userà titolo ed estratto come default.
           </p>
         </div>
@@ -580,25 +580,25 @@ export default function ArticleForm({
           />
           {isCheckingSlug && !initialData && formData.slug.length >= 3 && (
             <div className="absolute right-3 top-1/2 -translate-y-1/2">
-              <Loader2 className="animate-spin text-gray-400" size={16} />
+              <Loader2 className="animate-spin text-surface-400" size={16} />
             </div>
           )}
         </div>
         {slugExists && !initialData && (
-          <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start space-x-2">
-            <AlertCircle className="text-red-600 mt-0.5 flex-shrink-0" size={16} />
+          <div className="mt-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-xl flex items-start space-x-2">
+            <AlertCircle className="text-red-500 dark:text-red-400 mt-0.5 flex-shrink-0" size={16} />
             <div className="flex-1">
-              <p className="text-sm text-red-800 font-medium">
+              <p className="text-sm text-red-700 dark:text-red-300 font-medium">
                 Attenzione: Esiste già un articolo con questo slug!
               </p>
-              <p className="text-xs text-red-600 mt-1">
+              <p className="text-xs text-red-600 dark:text-red-400 mt-1">
                 Modifica lo slug per evitare conflitti. Gli articoli con lo stesso slug potrebbero essere sovrascritti durante le importazioni.
               </p>
             </div>
           </div>
         )}
         {!slugExists && !isCheckingSlug && !initialData && formData.slug.length >= 3 && (
-          <p className="mt-1 text-xs text-green-600">
+          <p className="mt-1 text-xs text-emerald-600 dark:text-emerald-400">
             ✓ Questo slug è disponibile
           </p>
         )}
@@ -620,7 +620,7 @@ export default function ArticleForm({
           placeholder="Breve descrizione dell'articolo..."
           maxLength={300}
         />
-        <p className="mt-1 text-xs text-gray-500">
+        <p className="mt-1 text-xs text-surface-400 dark:text-surface-500">
           {formData.excerpt.length}/300 caratteri
         </p>
       </div>
@@ -690,7 +690,7 @@ export default function ArticleForm({
         </label>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label htmlFor="publishDate" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="publishDate" className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
               Data
             </label>
             <input
@@ -704,7 +704,7 @@ export default function ArticleForm({
             />
           </div>
           <div>
-            <label htmlFor="publishTime" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="publishTime" className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
               Ora
             </label>
             <input
@@ -730,7 +730,7 @@ export default function ArticleForm({
               onChange={(e) =>
                 setFormData((prev) => ({ ...prev, isPremium: e.target.checked }))
               }
-              className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+              className="rounded border-surface-300 dark:border-surface-600 text-primary-600 dark:text-primary-400 focus:ring-primary-500 dark:bg-surface-800"
             />
             <span className="label mb-0">Contenuto Premium</span>
           </label>
@@ -758,8 +758,8 @@ export default function ArticleForm({
       </div>
 
       {/* SEO Section */}
-      <div className="border-t border-gray-200 pt-6" data-tour="article-seo">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">SEO</h3>
+      <div className="border-t border-surface-200 dark:border-surface-800 pt-6" data-tour="article-seo">
+        <h3 className="text-lg font-semibold text-surface-900 dark:text-white mb-4">SEO</h3>
 
         <div className="space-y-4">
           <div>
@@ -783,7 +783,7 @@ export default function ArticleForm({
               maxLength={60}
               placeholder="Titolo per i motori di ricerca (max 60 caratteri)"
             />
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="mt-1 text-xs text-surface-400 dark:text-surface-500">
               {(formData.seo?.metaTitle || '').length}/60 caratteri
             </p>
           </div>
@@ -809,7 +809,7 @@ export default function ArticleForm({
               maxLength={160}
               placeholder="Descrizione per i motori di ricerca (max 160 caratteri)"
             />
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="mt-1 text-xs text-surface-400 dark:text-surface-500">
               {(formData.seo?.metaDescription || '').length}/160 caratteri
             </p>
           </div>
@@ -864,7 +864,7 @@ export default function ArticleForm({
                     },
                   }))
                 }
-                className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                className="rounded border-surface-300 dark:border-surface-600 text-primary-600 dark:text-primary-400 focus:ring-primary-500 dark:bg-surface-800"
               />
               <span className="label mb-0">
                 Impedisci indicizzazione (noindex)
@@ -875,7 +875,7 @@ export default function ArticleForm({
       </div>
 
       {/* Submit */}
-      <div className="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200">
+      <div className="flex items-center justify-end space-x-3 pt-4 border-t border-surface-200 dark:border-surface-800">
         <button
           type="submit"
           disabled={isSubmitting}

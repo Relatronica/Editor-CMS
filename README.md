@@ -1,128 +1,76 @@
-# Capibara Editor - PWA Content Editor
+# Capibara Editor
 
-PWA semplificata e intuitiva per l'inserimento di contenuti nel CMS Strapi.
+PWA per l'inserimento e la gestione di contenuti nel CMS Strapi.
 
-## 🚀 Features
+## Stack
 
-- ✅ Mobile-first responsive design
-- ✅ Offline support con auto-sync
-- ✅ Form intuitivi per Article e Column
-- ✅ Upload immagini con preview
-- ✅ Rich text editor
-- ✅ Draft & Publish workflow
-- ✅ Autenticazione JWT/API Token
+- **React 18** + **TypeScript** + **Vite**
+- **Tailwind CSS** per lo styling
+- **TanStack Query** per data fetching e caching
+- **Zustand** per lo state management
+- **Tiptap** per il rich text editor
+- **Workbox** per PWA e service worker
 
-## 🛠️ Stack Tecnologico
+## Content Types
 
-- **Vite** - Build tool veloce
-- **React 18** - UI library
-- **TypeScript** - Type safety
-- **Tailwind CSS** - Styling
-- **React Router** - Routing
-- **TanStack Query** - Data fetching & caching
-- **Zustand** - State management
-- **Tiptap** - Rich text editor
-- **Workbox** - Service Worker & PWA
+| Tipo | Descrizione |
+|---|---|
+| **Columns** (Rubriche) | Titolo, slug, descrizione, cover, autore, links |
+| **Articles** | Titolo, slug, body (rich text), hero image, autore, tags, partners, SEO |
+| **Video Episodes** | Titolo, slug, video (Cloudinary), thumbnail, autore, durata |
+| **Events** | Gestione eventi con calendario |
 
-## 📦 Setup
-
-### Prerequisiti
-
-- Node.js 20+
-- npm 10+
-
-### Installazione
+## Quick Start
 
 ```bash
-cd apps/editor
+# Installa le dipendenze
 npm install
-```
 
-### Configurazione
+# Copia e configura le variabili d'ambiente
+cp .env.example .env
+# Modifica .env con URL backend e API token
 
-Copia il file di esempio delle variabili d'ambiente:
-
-```bash
-cp env.example .env
-```
-
-Modifica `.env` con le tue configurazioni:
-
-```env
-VITE_STRAPI_URL=http://localhost:1337
-VITE_API_TOKEN=your-api-token-here
-```
-
-### Sviluppo
-
-```bash
+# Avvia il server di sviluppo
 npm run dev
 ```
 
-L'app sarà disponibile su `http://localhost:3001`
+L'app sara' disponibile su `http://localhost:3001`.
 
-### Build Produzione
+### Variabili d'ambiente
+
+| Variabile | Descrizione |
+|---|---|
+| `VITE_STRAPI_URL` | URL del backend Strapi |
+| `VITE_API_TOKEN` | Token API creato in Strapi Admin → Settings → API Tokens |
+| `VITE_APP_ENV` | `development` o `production` |
+
+## Struttura progetto
+
+```
+src/
+├── components/
+│   ├── editors/         # Rich text editor (Tiptap)
+│   ├── forms/           # Form per ogni content type
+│   └── ui/              # Componenti UI riutilizzabili (ImageUpload, VideoUpload, Select, MultiSelect)
+├── config/              # Endpoint API e configurazioni
+├── hooks/               # Custom hooks (useArticles, useColumns, useEvents, useVideoEpisodes)
+├── lib/                 # API client e utilities
+├── pages/               # Pagine dell'app (Dashboard, Create/Edit per ogni content type)
+└── store/               # Zustand stores (auth, theme)
+```
+
+## Build
 
 ```bash
 npm run build
 ```
 
-I file compilati saranno in `dist/`
+I file compilati saranno in `dist/`.
 
-## 🔐 Autenticazione
+## Documentazione
 
-### Opzione 1: API Token (Consigliata)
-
-1. Vai su Strapi Admin → Settings → API Tokens
-2. Crea un nuovo token con permessi di scrittura
-3. Aggiungi il token in `.env` come `VITE_API_TOKEN`
-
-### Opzione 2: JWT User
-
-1. Usa il form di login nell'app
-2. Il token JWT verrà salvato in localStorage
-
-## 📱 Content Types Supportati
-
-### Column
-- Titolo, slug, descrizione
-- Cover image
-- Autore
-- Links (componente ripetibile)
-
-### Article
-- Titolo, slug, excerpt
-- Rich text body
-- Hero image
-- Autore, tags, partners
-- SEO component
-- Publish date, premium flag, reading time
-
-## 🏗️ Struttura Progetto
-
-```
-apps/editor/
-├── src/
-│   ├── components/      # Componenti React
-│   │   ├── forms/      # Form per content types
-│   │   ├── editors/    # Rich text editor
-│   │   └── ui/         # Componenti UI base
-│   ├── lib/            # Utilities
-│   │   ├── api.ts      # Client API Strapi
-│   │   ├── auth.ts     # Gestione autenticazione
-│   │   └── storage.ts  # IndexedDB per draft offline
-│   ├── hooks/          # Custom React hooks
-│   ├── pages/          # Pagine dell'app
-│   ├── store/          # Zustand stores
-│   └── main.tsx        # Entry point
-├── public/             # Asset statici
-└── dist/              # Build output
-```
-
-## 📝 TODO
-
-- [ ] Implementare tutti i content types
-- [ ] Migliorare offline sync
-- [ ] Aggiungere preview contenuti
-- [ ] Gestione avanzata media library
-- [ ] Export/Import contenuti
+- [Deploy](docs/deploy.md) - Guida completa al deploy (Netlify, Vercel, Render)
+- [CORS Troubleshooting](docs/cors-troubleshooting.md) - Risolvere errori CORS
+- [Troubleshooting](docs/troubleshooting.md) - Problemi comuni e soluzioni
+- [Video Episodes Setup](docs/video-episodes-setup.md) - Configurare Video Episodes in Strapi
+- [Content Protection](docs/content-protection.md) - Protezioni contro sovrascritture e cancellazioni

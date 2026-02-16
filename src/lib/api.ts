@@ -1,6 +1,11 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
+import { logger } from './logger';
 
 const STRAPI_URL = import.meta.env.VITE_STRAPI_URL || 'http://localhost:1337';
+
+// In development, use the Vite proxy to avoid CORS issues.
+// The proxy rewrites /api/* to the Strapi server.
+const API_BASE_URL = import.meta.env.DEV ? '/api' : `${STRAPI_URL}/api`;
 
 export interface StrapiResponse<T> {
   data: T;
@@ -28,7 +33,7 @@ class ApiClient {
 
   constructor() {
     this.client = axios.create({
-      baseURL: `${STRAPI_URL}/api`,
+      baseURL: API_BASE_URL,
       headers: {
         'Content-Type': 'application/json',
       },
@@ -36,12 +41,10 @@ class ApiClient {
 
     // Request interceptor per aggiungere token
     this.client.interceptors.request.use((config) => {
-      // Priorità al token JWT dell'utente autenticato
       const token = this.getToken();
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       } else {
-        // Usa API token solo se non c'è un token JWT
         const apiToken = import.meta.env.VITE_API_TOKEN;
         if (apiToken) {
           config.headers.Authorization = `Bearer ${apiToken}`;
@@ -56,7 +59,6 @@ class ApiClient {
       (response) => response,
       (error: AxiosError<StrapiError>) => {
         if (error.response?.status === 401) {
-          // Token scaduto o non valido
           localStorage.removeItem('auth_token');
           window.location.href = '/login';
         }
@@ -80,11 +82,12 @@ class ApiClient {
   // Generic CRUD methods
   async find<T>(
     endpoint: string,
-    params?: Record<string, unknown>
+    params?: Record<string, unknown>,
+    signal?: AbortSignal
   ): Promise<StrapiResponse<T[]>> {
     const response = await this.client.get<StrapiResponse<T[]>>(
       `/${endpoint}`,
-      { params }
+      { params, signal }
     );
     return response.data;
   }
@@ -92,16 +95,22 @@ class ApiClient {
   async findOne<T>(
     endpoint: string,
     id: string | number,
-    params?: Record<string, unknown>
+    params?: Record<string, unknown>,
+    signal?: AbortSignal
   ): Promise<StrapiResponse<T>> {
     const url = `/${endpoint}/${id}`;
-    console.log(`🌐 API call: GET ${url}`, params);
+    logger.debug(`API call: GET ${url}`, params);
     try {
-      const response = await this.client.get<StrapiResponse<T>>(url, { params });
-      console.log(`✅ API response for ${url}:`, response.status);
+      const response = await this.client.get<StrapiResponse<T>>(url, {
+        params,
+        signal,
+      });
+      logger.debug(`API response for ${url}:`, response.status);
       return response.data;
     } catch (error) {
-      console.error(`❌ API error for ${url}:`, error);
+      if (!axios.isCancel(error)) {
+        logger.error(`API error for ${url}:`, error);
+      }
       throw error;
     }
   }
@@ -123,24 +132,31 @@ class ApiClient {
     data: unknown
   ): Promise<StrapiResponse<T>> {
     const url = `/${endpoint}/${id}`;
-    console.log(`🌐 API call: PUT ${url}`, { id, idType: typeof id, data });
+    logger.debug(`API call: PUT ${url}`, { id, idType: typeof id, data });
     try {
-      const response = await this.client.put<StrapiResponse<T>>(
-        url,
-        { data }
-      );
-      console.log(`✅ API update response for ${url}:`, response.status);
+      const response = await this.client.put<StrapiResponse<T>>(url, {
+        data,
+      });
+      logger.debug(`API update response for ${url}:`, response.status);
       return response.data;
     } catch (error) {
-      console.error(`❌ API update error for ${url}:`, error);
-      if (error && typeof error === 'object' && 'response' in error) {
-        const axiosError = error as { response?: { status?: number; data?: unknown; config?: { url?: string } } };
-        console.error('📋 Update error details:', {
-          status: axiosError.response?.status,
-          data: axiosError.response?.data,
-          url: axiosError.response?.config?.url || url,
-          attemptedId: id,
-        });
+      if (!axios.isCancel(error)) {
+        logger.error(`API update error for ${url}:`, error);
+        if (error && typeof error === 'object' && 'response' in error) {
+          const axiosError = error as {
+            response?: {
+              status?: number;
+              data?: unknown;
+              config?: { url?: string };
+            };
+          };
+          logger.error('Update error details:', {
+            status: axiosError.response?.status,
+            data: axiosError.response?.data,
+            url: axiosError.response?.config?.url || url,
+            attemptedId: id,
+          });
+        }
       }
       throw error;
     }
@@ -169,12 +185,8 @@ class ApiClient {
     });
 
     const uploaded = response.data[0];
-    // Handle different response formats
-    const url =
-      uploaded.attributes?.url || uploaded.url || '';
-    const fullUrl = url.startsWith('http')
-      ? url
-      : `${STRAPI_URL}${url}`;
+    const url = uploaded.attributes?.url || uploaded.url || '';
+    const fullUrl = url.startsWith('http') ? url : `${STRAPI_URL}${url}`;
 
     return {
       id: uploaded.id,

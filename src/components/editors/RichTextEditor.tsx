@@ -25,7 +25,7 @@ export default function RichTextEditor({
       Link.configure({
         openOnClick: false,
         HTMLAttributes: {
-          class: 'text-primary-600 underline',
+          class: 'text-primary-600 dark:text-primary-400 underline',
         },
       }),
     ],
@@ -61,6 +61,31 @@ export default function RichTextEditor({
     editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
   };
 
+  const ToolbarButton = ({
+    onClick,
+    isActive,
+    title,
+    children,
+  }: {
+    onClick: () => void;
+    isActive: boolean;
+    title: string;
+    children: React.ReactNode;
+  }) => (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`p-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+        isActive
+          ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/40 dark:text-primary-300'
+          : 'text-surface-500 hover:text-surface-700 hover:bg-surface-100 dark:text-surface-400 dark:hover:text-surface-200 dark:hover:bg-surface-700/50'
+      }`}
+      title={title}
+    >
+      {children}
+    </button>
+  );
+
   return (
     <div>
       {label && (
@@ -71,87 +96,70 @@ export default function RichTextEditor({
       )}
 
       {/* Toolbar */}
-      <div className="border border-gray-300 rounded-t-lg bg-gray-50 p-2 flex items-center space-x-1">
-        <button
-          type="button"
+      <div className="border border-surface-300 dark:border-surface-700 rounded-t-xl bg-surface-50 dark:bg-surface-800/50 p-1.5 flex items-center gap-0.5">
+        <ToolbarButton
           onClick={() => editor.chain().focus().toggleBold().run()}
-          className={`p-2 rounded hover:bg-gray-200 transition-colors ${
-            editor.isActive('bold') ? 'bg-gray-300' : ''
-          }`}
+          isActive={editor.isActive('bold')}
           title="Grassetto"
         >
           <Bold size={16} />
-        </button>
-        <button
-          type="button"
+        </ToolbarButton>
+        <ToolbarButton
           onClick={() => editor.chain().focus().toggleItalic().run()}
-          className={`p-2 rounded hover:bg-gray-200 transition-colors ${
-            editor.isActive('italic') ? 'bg-gray-300' : ''
-          }`}
+          isActive={editor.isActive('italic')}
           title="Corsivo"
         >
           <Italic size={16} />
-        </button>
-        <div className="w-px h-6 bg-gray-300 mx-1" />
-        <button
-          type="button"
+        </ToolbarButton>
+
+        <div className="w-px h-5 bg-surface-300 dark:bg-surface-600 mx-1" />
+
+        <ToolbarButton
           onClick={() => editor.chain().focus().toggleBulletList().run()}
-          className={`p-2 rounded hover:bg-gray-200 transition-colors ${
-            editor.isActive('bulletList') ? 'bg-gray-300' : ''
-          }`}
+          isActive={editor.isActive('bulletList')}
           title="Lista puntata"
         >
           <List size={16} />
-        </button>
-        <button
-          type="button"
+        </ToolbarButton>
+        <ToolbarButton
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
-          className={`p-2 rounded hover:bg-gray-200 transition-colors ${
-            editor.isActive('orderedList') ? 'bg-gray-300' : ''
-          }`}
+          isActive={editor.isActive('orderedList')}
           title="Lista numerata"
         >
           <List size={16} />
-        </button>
-        <div className="w-px h-6 bg-gray-300 mx-1" />
-        <button
-          type="button"
+        </ToolbarButton>
+
+        <div className="w-px h-5 bg-surface-300 dark:bg-surface-600 mx-1" />
+
+        <ToolbarButton
           onClick={setLink}
-          className={`p-2 rounded hover:bg-gray-200 transition-colors ${
-            editor.isActive('link') ? 'bg-gray-300' : ''
-          }`}
+          isActive={editor.isActive('link')}
           title="Aggiungi link"
         >
           <LinkIcon size={16} />
-        </button>
-        <button
-          type="button"
+        </ToolbarButton>
+        <ToolbarButton
           onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-          className={`p-2 rounded hover:bg-gray-200 transition-colors ${
-            editor.isActive('heading', { level: 2 }) ? 'bg-gray-300' : ''
-          }`}
+          isActive={editor.isActive('heading', { level: 2 })}
           title="Titolo 2"
         >
           H2
-        </button>
-        <button
-          type="button"
+        </ToolbarButton>
+        <ToolbarButton
           onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-          className={`p-2 rounded hover:bg-gray-200 transition-colors ${
-            editor.isActive('heading', { level: 3 }) ? 'bg-gray-300' : ''
-          }`}
+          isActive={editor.isActive('heading', { level: 3 })}
           title="Titolo 3"
         >
           H3
-        </button>
+        </ToolbarButton>
       </div>
 
       {/* Editor */}
-      <div className="border-x border-b border-gray-300 rounded-b-lg bg-white">
+      <div className="border-x border-b border-surface-300 dark:border-surface-700 rounded-b-xl bg-white dark:bg-surface-800/30">
         <EditorContent editor={editor} />
       </div>
 
-      <p className="mt-1 text-xs text-gray-500">
+      <p className="mt-1.5 text-xs text-surface-400 dark:text-surface-500">
         Supporta Markdown, heading, liste e link
       </p>
     </div>

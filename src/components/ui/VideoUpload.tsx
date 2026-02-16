@@ -15,7 +15,7 @@ export default function VideoUpload({
   onChange,
   label = 'Video',
   accept = 'video/*',
-  maxSizeMB = 500, // Default 500MB per video (Cloudinary può gestire file più grandi)
+  maxSizeMB = 500,
 }: VideoUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState('');
@@ -26,13 +26,11 @@ export default function VideoUpload({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
     if (!file.type.startsWith('video/')) {
       setError('Seleziona un file video valido (MP4, MOV, AVI, WebM, etc.)');
       return;
     }
 
-    // Validate file size
     const maxSizeBytes = maxSizeMB * 1024 * 1024;
     if (file.size > maxSizeBytes) {
       setError(`Il file è troppo grande. Massimo ${maxSizeMB}MB`);
@@ -44,8 +42,6 @@ export default function VideoUpload({
     setUploadProgress(0);
 
     try {
-      // Note: apiClient.upload doesn't support progress tracking directly
-      // Cloudinary will handle the upload and transcoding
       const uploaded = await apiClient.upload(file);
       onChange(uploaded);
     } catch (err) {
@@ -70,8 +66,8 @@ export default function VideoUpload({
       {label && <label className="label">{label}</label>}
       
       {value ? (
-        <div className="relative">
-          <div className="relative w-full bg-gray-900 rounded-lg overflow-hidden border border-gray-300">
+        <div className="relative group">
+          <div className="relative w-full bg-surface-900 rounded-xl overflow-hidden border border-surface-200 dark:border-surface-700">
             <video
               src={value.url}
               controls
@@ -83,23 +79,23 @@ export default function VideoUpload({
             <button
               type="button"
               onClick={handleRemove}
-              className="absolute top-2 right-2 p-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors shadow-lg"
+              className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all duration-200 shadow-lg opacity-80 group-hover:opacity-100"
               title="Rimuovi video"
             >
-              <X size={16} />
+              <X size={14} />
             </button>
           </div>
-          <p className="mt-2 text-xs text-gray-500">
+          <p className="mt-2 text-xs text-surface-400 dark:text-surface-500">
             Video caricato su Cloudinary. La transcodifica potrebbe richiedere alcuni minuti per video di grandi dimensioni.
           </p>
         </div>
       ) : (
         <div
           onClick={() => !isUploading && fileInputRef.current?.click()}
-          className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+          className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all duration-200 ${
             isUploading
-              ? 'border-primary-400 bg-primary-50 cursor-wait'
-              : 'border-gray-300 hover:border-primary-500 hover:bg-primary-50 cursor-pointer'
+              ? 'border-primary-400 dark:border-primary-500 bg-primary-50/50 dark:bg-primary-900/10 cursor-wait'
+              : 'border-surface-300 dark:border-surface-700 hover:border-primary-400 dark:hover:border-primary-500 hover:bg-primary-50/50 dark:hover:bg-primary-900/10 cursor-pointer'
           }`}
         >
           <input
@@ -112,38 +108,38 @@ export default function VideoUpload({
           />
           
           {isUploading ? (
-            <div className="flex flex-col items-center space-y-3">
-              <Loader2 className="animate-spin text-primary-600" size={40} />
-              <span className="text-sm font-medium text-gray-700">
+            <div className="flex flex-col items-center gap-3">
+              <Loader2 className="animate-spin text-primary-600 dark:text-primary-400" size={36} />
+              <span className="text-sm font-medium text-surface-600 dark:text-surface-300">
                 Upload in corso...
               </span>
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-surface-400 dark:text-surface-500">
                 Il caricamento potrebbe richiedere alcuni minuti per file grandi.
                 <br />
                 Cloudinary ottimizzerà automaticamente il video.
               </span>
               {uploadProgress > 0 && (
-                <div className="w-full max-w-xs bg-gray-200 rounded-full h-2 mt-2">
+                <div className="w-full max-w-xs bg-surface-200 dark:bg-surface-700 rounded-full h-1.5 mt-2">
                   <div
-                    className="bg-primary-600 h-2 rounded-full transition-all duration-300"
+                    className="bg-primary-600 dark:bg-primary-400 h-1.5 rounded-full transition-all duration-300"
                     style={{ width: `${uploadProgress}%` }}
                   />
                 </div>
               )}
             </div>
           ) : (
-            <div className="flex flex-col items-center space-y-3">
-              <div className="p-4 bg-primary-100 rounded-full">
-                <Film className="text-primary-600" size={32} />
+            <div className="flex flex-col items-center gap-3">
+              <div className="p-4 bg-primary-50 dark:bg-primary-900/30 rounded-2xl">
+                <Film className="text-primary-600 dark:text-primary-400" size={28} />
               </div>
-              <div>
-                <span className="text-sm font-medium text-gray-700 block mb-1">
+              <div className="space-y-1">
+                <span className="text-sm font-medium text-surface-600 dark:text-surface-300 block">
                   Clicca per caricare un video
                 </span>
-                <span className="text-xs text-gray-500 block">
+                <span className="text-xs text-surface-400 dark:text-surface-500 block">
                   MP4, MOV, AVI, WebM (max {maxSizeMB}MB)
                 </span>
-                <span className="text-xs text-gray-400 block mt-1">
+                <span className="text-xs text-surface-400 dark:text-surface-500 block">
                   Il video verrà ottimizzato automaticamente da Cloudinary
                 </span>
               </div>
@@ -153,7 +149,7 @@ export default function VideoUpload({
       )}
 
       {error && (
-        <p className="mt-2 text-sm text-red-600 flex items-center space-x-1">
+        <p className="mt-2 text-sm text-red-500 dark:text-red-400 flex items-center gap-1">
           <X size={14} />
           <span>{error}</span>
         </p>

@@ -340,22 +340,22 @@ export default function VideoEpisodeForm({
           />
           {isCheckingSlug && !initialData && formData.slug.length >= 3 && (
             <div className="absolute right-3 top-1/2 -translate-y-1/2">
-              <Loader2 className="animate-spin text-gray-400" size={16} />
+              <Loader2 className="animate-spin text-surface-400 dark:text-surface-500" size={16} />
             </div>
           )}
         </div>
         {slugExists && !initialData && (
-          <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start space-x-2">
-            <AlertCircle className="text-red-600 mt-0.5 flex-shrink-0" size={16} />
+          <div className="mt-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-xl flex items-start space-x-2">
+            <AlertCircle className="text-red-500 dark:text-red-400 mt-0.5 flex-shrink-0" size={16} />
             <div className="flex-1">
-              <p className="text-sm text-red-800 font-medium">
+              <p className="text-sm text-red-700 dark:text-red-300 font-medium">
                 Attenzione: Esiste già un episodio con questo slug!
               </p>
             </div>
           </div>
         )}
         {!slugExists && !isCheckingSlug && !initialData && formData.slug.length >= 3 && (
-          <p className="mt-1 text-xs text-green-600">
+          <p className="mt-1 text-xs text-emerald-600 dark:text-emerald-400">
             ✓ Questo slug è disponibile
           </p>
         )}
@@ -419,7 +419,7 @@ export default function VideoEpisodeForm({
             }}
             maxSizeMB={500}
           />
-          <p className="mt-1 text-xs text-gray-500">
+          <p className="mt-1 text-xs text-surface-400 dark:text-surface-500">
             Carica un video per ottenere automaticamente l'URL da Cloudinary
           </p>
         </div>
@@ -441,12 +441,12 @@ export default function VideoEpisodeForm({
             placeholder="https://res.cloudinary.com/.../video.mp4"
           />
           {uploadedVideo && uploadedVideo.url === formData.videoUrl && (
-            <p className="mt-1 text-xs text-green-600">
+            <p className="mt-1 text-xs text-emerald-600 dark:text-emerald-400">
               ✓ URL impostato automaticamente da Cloudinary
             </p>
           )}
           {!uploadedVideo && (
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="mt-1 text-xs text-surface-400 dark:text-surface-500">
               Puoi anche inserire manualmente l'URL del video (es. da Cloudinary o altro provider)
             </p>
           )}
@@ -499,7 +499,7 @@ export default function VideoEpisodeForm({
               onChange={(e) =>
                 setFormData((prev) => ({ ...prev, isPremium: e.target.checked }))
               }
-              className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+              className="rounded border-surface-300 dark:border-surface-600 text-primary-600 dark:text-primary-400 focus:ring-primary-500 dark:bg-surface-800"
             />
             <span className="label mb-0">Contenuto Premium</span>
           </label>
@@ -550,7 +550,7 @@ export default function VideoEpisodeForm({
         </label>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label htmlFor="publishDate" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="publishDate" className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
               Data
             </label>
             <input
@@ -564,7 +564,7 @@ export default function VideoEpisodeForm({
             />
           </div>
           <div>
-            <label htmlFor="publishTime" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="publishTime" className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
               Ora
             </label>
             <input
@@ -581,8 +581,8 @@ export default function VideoEpisodeForm({
       </div>
 
       {/* SEO Section */}
-      <div className="border-t border-gray-200 pt-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">SEO</h3>
+      <div className="border-t border-surface-200 dark:border-surface-800 pt-6">
+        <h3 className="text-lg font-semibold text-surface-900 dark:text-white mb-4">SEO</h3>
         <div className="space-y-4">
           <div>
             <label htmlFor="seoMetaTitle" className="label">
@@ -680,7 +680,7 @@ export default function VideoEpisodeForm({
                     },
                   }))
                 }
-                className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                className="rounded border-surface-300 dark:border-surface-600 text-primary-600 dark:text-primary-400 focus:ring-primary-500 dark:bg-surface-800"
               />
               <span className="label mb-0">
                 Impedisci indicizzazione (noindex)
@@ -691,7 +691,7 @@ export default function VideoEpisodeForm({
       </div>
 
       {/* Submit */}
-      <div className="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200">
+      <div className="flex items-center justify-end space-x-3 pt-4 border-t border-surface-200 dark:border-surface-800">
         <button
           type="submit"
           disabled={isSubmitting}

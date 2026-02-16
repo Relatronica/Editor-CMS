@@ -29,7 +29,6 @@ export default function MultiSelect({
   const [searchTerm, setSearchTerm] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Close on outside click
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -81,52 +80,54 @@ export default function MultiSelect({
       {label && <label className="label">{label}</label>}
 
       {/* Selected tags */}
-      <div className="flex flex-wrap gap-2 mb-2">
-        {selectedOptions.map((option) => (
-          <span
-            key={option.id}
-            className="inline-flex items-center space-x-1 px-3 py-1 bg-primary-100 text-primary-800 rounded-full text-sm"
-          >
-            <span>{option.label}</span>
-            <button
-              type="button"
-              onClick={() => removeOption(option.id)}
-              className="hover:text-primary-900"
+      {selectedOptions.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mb-2">
+          {selectedOptions.map((option) => (
+            <span
+              key={option.id}
+              className="inline-flex items-center gap-1 px-2.5 py-1 bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 rounded-lg text-xs font-medium"
             >
-              <X size={14} />
-            </button>
-          </span>
-        ))}
-      </div>
+              <span>{option.label}</span>
+              <button
+                type="button"
+                onClick={() => removeOption(option.id)}
+                className="hover:text-primary-900 dark:hover:text-primary-100 transition-colors"
+              >
+                <X size={12} />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
 
       {/* Input/Button */}
       <div
         onClick={() => setIsOpen(!isOpen)}
         className="input cursor-pointer flex items-center justify-between"
       >
-        <span className={selectedOptions.length > 0 ? 'text-gray-900' : 'text-gray-400'}>
+        <span className={selectedOptions.length > 0 ? 'text-surface-900 dark:text-surface-100 text-sm' : 'text-surface-400 dark:text-surface-500 text-sm'}>
           {selectedOptions.length > 0
             ? `${selectedOptions.length} selezionati`
             : placeholder}
         </span>
-        <span className="text-gray-400">▼</span>
+        <span className="text-surface-400 dark:text-surface-500 text-xs">&#9660;</span>
       </div>
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto">
+        <div className="absolute z-50 w-full mt-1.5 bg-white dark:bg-surface-800 border border-surface-200 dark:border-surface-700 rounded-xl shadow-soft-lg dark:shadow-dark-soft max-h-60 overflow-auto animate-slide-down">
           {searchable && (
-            <div className="p-2 border-b border-gray-200">
+            <div className="p-2 border-b border-surface-200 dark:border-surface-700">
               <div className="relative">
                 <Search
-                  size={16}
-                  className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400"
+                  size={14}
+                  className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-surface-400 dark:text-surface-500"
                 />
                 <input
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-8 pr-2 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full pl-8 pr-2 py-2 bg-surface-50 dark:bg-surface-700/50 border border-surface-200 dark:border-surface-600 rounded-lg text-sm text-surface-900 dark:text-surface-100 placeholder:text-surface-400 dark:placeholder:text-surface-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 dark:focus:border-primary-400 transition-all"
                   placeholder="Cerca..."
                   onClick={(e) => e.stopPropagation()}
                 />
@@ -136,7 +137,7 @@ export default function MultiSelect({
 
           <div className="py-1">
             {filteredOptions.length === 0 ? (
-              <div className="px-4 py-3 text-sm text-gray-500 text-center">
+              <div className="px-4 py-3 text-sm text-surface-400 dark:text-surface-500 text-center">
                 {searchTerm ? (
                   <>
                     Nessun risultato per "{searchTerm}"
@@ -144,7 +145,7 @@ export default function MultiSelect({
                       <button
                         type="button"
                         onClick={handleCreateNew}
-                        className="block mt-2 text-primary-600 hover:text-primary-700 font-medium"
+                        className="block mt-2 text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium mx-auto transition-colors"
                       >
                         Crea "{searchTerm}"
                       </button>
@@ -160,20 +161,20 @@ export default function MultiSelect({
                   key={option.id}
                   type="button"
                   onClick={() => toggleOption(option.id)}
-                  className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center space-x-2"
+                  className="w-full px-4 py-2.5 text-left hover:bg-surface-50 dark:hover:bg-surface-700/50 flex items-center gap-2.5 transition-colors"
                 >
                   <span
-                    className={`w-4 h-4 border-2 rounded flex items-center justify-center ${
+                    className={`w-4 h-4 border-2 rounded flex items-center justify-center flex-shrink-0 transition-all ${
                       value.includes(option.id)
-                        ? 'bg-primary-600 border-primary-600'
-                        : 'border-gray-300'
+                        ? 'bg-primary-600 dark:bg-primary-500 border-primary-600 dark:border-primary-500'
+                        : 'border-surface-300 dark:border-surface-600'
                     }`}
                   >
                     {value.includes(option.id) && (
-                      <Check size={12} className="text-white" />
+                      <Check size={10} className="text-white" />
                     )}
                   </span>
-                  <span className="flex-1">{option.label}</span>
+                  <span className="flex-1 text-sm text-surface-900 dark:text-surface-100">{option.label}</span>
                 </button>
               ))
             )}

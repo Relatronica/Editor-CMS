@@ -1,20 +1,20 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import ColumnForm from '../components/forms/ColumnForm';
+import EventForm, { EventFormData } from '../components/forms/EventForm';
 import { ArrowLeft, AlertCircle } from 'lucide-react';
-import { useCreateColumn, type ColumnFormData } from '../hooks/useColumns';
+import { useCreateEvent } from '../hooks/useEvents';
 
-export default function CreateColumnPage() {
+export default function CreateEventPage() {
   const navigate = useNavigate();
   const [error, setError] = useState('');
 
-  const mutation = useCreateColumn();
+  const mutation = useCreateEvent();
 
-  const handleSubmit = async (formData: ColumnFormData) => {
+  const handleSubmit = async (formData: EventFormData) => {
     setError('');
     try {
       await mutation.mutateAsync(formData);
-      navigate('/');
+      navigate('/events');
     } catch (err: unknown) {
       setError(
         err instanceof Error
@@ -25,18 +25,18 @@ export default function CreateColumnPage() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="max-w-4xl mx-auto">
       <div className="mb-6">
         <Link
-          to="/"
+          to="/events"
           className="inline-flex items-center space-x-2 text-surface-500 dark:text-surface-400 hover:text-surface-700 dark:hover:text-surface-200 mb-4"
         >
           <ArrowLeft size={16} />
-          <span>Torna alla Dashboard</span>
+          <span>Torna agli eventi</span>
         </Link>
-        <h1 className="text-2xl font-bold text-surface-900 dark:text-white tracking-tight">Nuova Rubrica</h1>
+        <h1 className="text-2xl font-bold text-surface-900 dark:text-white tracking-tight">Nuovo Evento</h1>
         <p className="text-surface-500 dark:text-surface-400 mt-1">
-          Crea una nuova rubrica con link curati
+          Crea un nuovo evento
         </p>
       </div>
 
@@ -48,7 +48,7 @@ export default function CreateColumnPage() {
       )}
 
       <div className="card">
-        <ColumnForm onSubmit={handleSubmit} isSubmitting={mutation.isPending} />
+        <EventForm onSubmit={handleSubmit} isSubmitting={mutation.isPending} />
       </div>
     </div>
   );

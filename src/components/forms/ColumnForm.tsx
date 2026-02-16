@@ -416,30 +416,30 @@ export default function ColumnForm({
           />
           {isCheckingSlug && !initialData && formData.slug.length >= 3 && (
             <div className="absolute right-3 top-1/2 -translate-y-1/2">
-              <Loader2 className="animate-spin text-gray-400" size={16} />
+              <Loader2 className="animate-spin text-surface-400" size={16} />
             </div>
           )}
         </div>
         {slugExists && !initialData && (
-          <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start space-x-2">
-            <AlertCircle className="text-red-600 mt-0.5 flex-shrink-0" size={16} />
+          <div className="mt-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-xl flex items-start space-x-2">
+            <AlertCircle className="text-red-500 dark:text-red-400 mt-0.5 flex-shrink-0" size={16} />
             <div className="flex-1">
-              <p className="text-sm text-red-800 font-medium">
+              <p className="text-sm text-red-700 dark:text-red-300 font-medium">
                 Attenzione: Esiste già una rubrica con questo slug!
               </p>
-              <p className="text-xs text-red-600 mt-1">
+              <p className="text-xs text-red-600 dark:text-red-400 mt-1">
                 Modifica lo slug per evitare conflitti. Le rubriche con lo stesso slug potrebbero essere sovrascritte durante le importazioni.
               </p>
             </div>
           </div>
         )}
         {!slugExists && !isCheckingSlug && !initialData && formData.slug.length >= 3 && (
-          <p className="mt-1 text-xs text-green-600">
+          <p className="mt-1 text-xs text-emerald-600 dark:text-emerald-400">
             ✓ Questo slug è disponibile
           </p>
         )}
         {!slugExists && !isCheckingSlug && (
-          <p className="mt-1 text-xs text-gray-500">
+          <p className="mt-1 text-xs text-surface-400 dark:text-surface-500">
             URL-friendly identifier (auto-generato dal titolo)
           </p>
         )}
@@ -484,12 +484,12 @@ export default function ColumnForm({
       <div>
         <div className="flex items-center justify-between mb-2">
           <label className="label">
-            Link <span className="text-sm font-normal text-gray-500">(collegamenti esterni)</span>
+            Link <span className="text-sm font-normal text-surface-400 dark:text-surface-500">(collegamenti esterni)</span>
           </label>
           <button
             type="button"
             onClick={handleAddLink}
-            className="flex items-center space-x-1 text-sm text-primary-600 hover:text-primary-700 font-medium"
+            className="flex items-center space-x-1 text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium transition-colors"
           >
             <Plus size={16} />
             <span>Aggiungi Link</span>
@@ -497,7 +497,7 @@ export default function ColumnForm({
         </div>
 
         {formData.links.length === 0 ? (
-          <p className="text-sm text-gray-500 text-center py-4 border border-dashed border-gray-300 rounded-lg">
+          <p className="text-sm text-surface-400 dark:text-surface-500 text-center py-4 border border-dashed border-surface-300 dark:border-surface-700 rounded-xl">
             Nessun link aggiunto. Clicca "Aggiungi Link" per iniziare.
           </p>
         ) : (
@@ -505,16 +505,16 @@ export default function ColumnForm({
             {formData.links.map((link, index) => (
               <div
                 key={index}
-                className="p-4 border border-gray-200 rounded-lg space-y-3"
+                className="p-4 border border-surface-200 dark:border-surface-700 rounded-xl space-y-3"
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">
+                  <span className="text-sm font-medium text-surface-700 dark:text-surface-300">
                     Link #{index + 1}
                   </span>
                   <button
                     type="button"
                     onClick={() => handleRemoveLink(index)}
-                    className="p-1 text-red-600 hover:text-red-700 hover:bg-red-50 rounded"
+                    className="p-1 text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                   >
                     <X size={16} />
                   </button>
@@ -551,7 +551,7 @@ export default function ColumnForm({
                     placeholder="https://..."
                   />
                   {duplicateLinks.has(index) && (
-                    <p className="mt-1 text-xs text-orange-600 flex items-center space-x-1">
+                    <p className="mt-1 text-xs text-orange-600 dark:text-orange-400 flex items-center space-x-1">
                       <AlertCircle size={12} />
                       <span>Questo URL è già presente in un altro link</span>
                     </p>
@@ -575,7 +575,7 @@ export default function ColumnForm({
                   <label className="label text-xs mb-2">Data di pubblicazione (opzionale)</label>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">
+                      <label className="block text-xs font-medium text-surface-700 dark:text-surface-300 mb-1">
                         Data
                       </label>
                       <input
@@ -590,7 +590,7 @@ export default function ColumnForm({
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">
+                      <label className="block text-xs font-medium text-surface-700 dark:text-surface-300 mb-1">
                         Ora
                       </label>
                       <input
@@ -613,7 +613,7 @@ export default function ColumnForm({
       </div>
 
       {/* Submit Button */}
-      <div className="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200">
+      <div className="flex items-center justify-end space-x-3 pt-4 border-t border-surface-200 dark:border-surface-800">
         <button
           type="submit"
           disabled={isSubmitting}

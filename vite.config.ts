@@ -65,5 +65,17 @@ export default defineConfig({
   server: {
     port: 3001,
     host: true,
+    proxy: {
+      '/api': {
+        target: 'https://capibara-1z0m.onrender.com',
+        changeOrigin: true,
+        secure: true,
+      },
+      '/uploads': {
+        target: 'https://capibara-1z0m.onrender.com',
+        changeOrigin: true,
+        secure: true,
+      },
+    },
   },
 });

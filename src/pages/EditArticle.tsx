@@ -1,9 +1,11 @@
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '../lib/api';
 import ArticleForm from '../components/forms/ArticleForm';
 import { ArrowLeft, AlertCircle, Loader2 } from 'lucide-react';
 import { useState } from 'react';
+import {
+  useArticleDetail,
+  useUpdateArticle,
+} from '../hooks/useArticles';
 
 interface SEOData {
   metaTitle?: string;
@@ -28,241 +30,33 @@ interface ArticleFormData {
   seo: SEOData | null;
 }
 
-// Support both Strapi v4 (with attributes) and v5 (direct fields)
-interface ArticleData {
-  id: number;
-  documentId?: string;
-  title?: string;
-  slug?: string;
-  excerpt?: string;
-  body?: string;
-  heroImage?: any;
-  publishDate?: string;
-  isPremium?: boolean;
-  readingTime?: number | null;
-  author?: { data?: { id: number } } | number | null;
-  tags?: { data?: Array<{ id: number }> } | number[];
-  partners?: { data?: Array<{ id: number }> } | number[];
-  seo?: SEOData & {
-    metaImage?: { data?: { id: number; attributes?: { url?: string } } } | { id: number; url: string } | null;
-  } | null;
-  attributes?: Partial<
-    ArticleFormData & {
-      author?: { data?: { id: number } };
-      tags?: { data?: Array<{ id: number }> };
-      partners?: { data?: Array<{ id: number }> };
-      heroImage?: { data?: { id: number; attributes?: { url?: string } } };
-      seo?: SEOData & {
-        metaImage?: { data?: { id: number; attributes?: { url?: string } } };
-      };
-    }
-  >;
-}
-
-interface ArticleResponse {
-  data: ArticleData;
-  meta?: any;
-}
-
 export default function EditArticlePage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const [error, setError] = useState('');
 
-      const { data, isLoading } = useQuery<ArticleResponse>({
-    queryKey: ['articles', id],
-    queryFn: () =>
-      apiClient.findOne<ArticleData>('articles', id!, {
-        populate: ['heroImage', 'author', 'tags', 'partners', 'seo.metaImage'],
-      }) as Promise<ArticleResponse>,
-    enabled: !!id,
-  });
+  const { data, isLoading } = useArticleDetail(id);
 
-  const mutation = useMutation({
-    mutationFn: async (formData: {
-      title: string;
-      slug: string;
-      excerpt: string;
-      body: string;
-      heroImage: { id: number; url: string } | null;
-      publishDate: string;
-      isPremium: boolean;
-      readingTime: number | null;
-      author: number | null;
-      tags: number[];
-      partners: number[];
-      seo: {
-        metaTitle?: string;
-        metaDescription?: string;
-        keywords?: string;
-        metaImage?: { id: number; url: string } | null;
-        preventIndexing?: boolean;
-      } | null;
-    }) => {
-      // IMPORTANTE: Preservare i dati esistenti per evitare cancellazioni accidentali
-      // Durante un UPDATE, Strapi sostituisce completamente l'entità se usiamo PUT
-      // Dobbiamo assicurarci di includere tutti i campi necessari
-      const currentArticle = data?.data;
-      const currentAttrs = currentArticle?.attributes || currentArticle;
+  const mutation = useUpdateArticle(id, data);
 
-      // Format data for Strapi API
-      const updateData: Record<string, unknown> = {
-        title: formData.title,
-        slug: formData.slug,
-        excerpt: formData.excerpt || null,
-        body: formData.body,
-        publishDate: formData.publishDate || null,
-        isPremium: formData.isPremium,
-        readingTime: formData.readingTime || null,
-      };
-
-      // Preserva heroImage esistente se non specificato nel form
-      if (formData.heroImage) {
-        updateData.heroImage = formData.heroImage.id;
-      } else {
-        // Se il form ha null esplicitamente, rimuovi l'immagine
-        // Altrimenti preserva quella esistente
-        const currentHeroImage = currentAttrs?.heroImage;
-        if (currentHeroImage) {
-          // Preserva l'immagine esistente se non è stata rimossa esplicitamente
-          const heroImageId = currentHeroImage?.data?.id ?? currentHeroImage?.id;
-          if (heroImageId) {
-            updateData.heroImage = heroImageId;
-          } else {
-            updateData.heroImage = null;
-          }
-        } else {
-          updateData.heroImage = null;
-        }
-      }
-
-      // Preserva author esistente se non specificato
-      if (formData.author !== null && formData.author !== undefined) {
-        updateData.author = formData.author;
-      } else {
-        const currentAuthor = currentAttrs?.author;
-        if (currentAuthor) {
-          const authorId = typeof currentAuthor === 'object' && 'data' in currentAuthor && currentAuthor.data
-            ? (currentAuthor as { data: { id: number } }).data.id
-            : typeof currentAuthor === 'number'
-            ? currentAuthor
-            : null;
-          if (authorId) {
-            updateData.author = authorId;
-          } else {
-            updateData.author = null;
-          }
-        } else {
-          updateData.author = null;
-        }
-      }
-
-      // Preserva tags e partners esistenti se il form è vuoto (potrebbe essere una perdita accidentale)
-      if (formData.tags.length > 0) {
-        updateData.tags = formData.tags;
-      } else {
-        // Se il form è vuoto ma ci sono tag esistenti, preservali per sicurezza
-        const currentTags = currentAttrs?.tags;
-        if (currentTags) {
-          const tagIds = Array.isArray(currentTags) && currentTags.length > 0
-            ? currentTags.map((tag: any) => 
-                typeof tag === 'object' && 'id' in tag ? tag.id : tag
-              ).filter((id: any): id is number => typeof id === 'number')
-            : [];
-          updateData.tags = tagIds.length > 0 ? tagIds : [];
-        } else {
-          updateData.tags = [];
-        }
-      }
-
-      if (formData.partners.length > 0) {
-        updateData.partners = formData.partners;
-      } else {
-        // Se il form è vuoto ma ci sono partner esistenti, preservali per sicurezza
-        const currentPartners = currentAttrs?.partners;
-        if (currentPartners) {
-          const partnerIds = Array.isArray(currentPartners) && currentPartners.length > 0
-            ? currentPartners.map((partner: any) => 
-                typeof partner === 'object' && 'id' in partner ? partner.id : partner
-              ).filter((id: any): id is number => typeof id === 'number')
-            : [];
-          updateData.partners = partnerIds.length > 0 ? partnerIds : [];
-        } else {
-          updateData.partners = [];
-        }
-      }
-
-      // Preserva SEO esistente se non specificato
-      if (formData.seo) {
-        const seoData: Record<string, unknown> = {};
-        if (formData.seo.metaTitle) seoData.metaTitle = formData.seo.metaTitle;
-        if (formData.seo.metaDescription) seoData.metaDescription = formData.seo.metaDescription;
-        if (formData.seo.keywords) seoData.keywords = formData.seo.keywords;
-        if (formData.seo.metaImage) {
-          seoData.metaImage = formData.seo.metaImage.id;
-        } else {
-          seoData.metaImage = null;
-        }
-        if (formData.seo.preventIndexing !== undefined) {
-          seoData.preventIndexing = formData.seo.preventIndexing;
-        }
-        updateData.seo = seoData;
-      } else {
-        // Se SEO non è nel form, preserva quello esistente
-        const currentSeo = currentAttrs?.seo;
-        if (currentSeo && typeof currentSeo === 'object') {
-          const seoData: Record<string, unknown> = {};
-          if ('metaTitle' in currentSeo) seoData.metaTitle = currentSeo.metaTitle;
-          if ('metaDescription' in currentSeo) seoData.metaDescription = currentSeo.metaDescription;
-          if ('keywords' in currentSeo) seoData.keywords = currentSeo.keywords;
-          if ('preventIndexing' in currentSeo) seoData.preventIndexing = currentSeo.preventIndexing;
-          // Preserva metaImage se esiste
-          const currentMetaImage = (currentSeo as any)?.metaImage;
-          if (currentMetaImage) {
-            const metaImageId = currentMetaImage?.data?.id ?? currentMetaImage?.id;
-            if (metaImageId) {
-              seoData.metaImage = metaImageId;
-            }
-          }
-          if (Object.keys(seoData).length > 0) {
-            updateData.seo = seoData;
-          } else {
-            updateData.seo = null;
-          }
-        } else {
-          updateData.seo = null;
-        }
-      }
-
-      return apiClient.update('articles', id!, updateData);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['articles'] });
-      // Invalidate calendar query to refresh scheduled content
-      queryClient.invalidateQueries({ 
-        queryKey: ['articles', 'scheduled']
-      });
+  const handleSubmit = async (formData: ArticleFormData) => {
+    setError('');
+    try {
+      await mutation.mutateAsync(formData);
       navigate('/');
-    },
-    onError: (err: unknown) => {
+    } catch (err: unknown) {
       setError(
         err instanceof Error
           ? err.message
           : 'Errore durante il salvataggio. Riprova.'
       );
-    },
-  });
-
-  const handleSubmit = async (formData: ArticleFormData) => {
-    setError('');
-    await mutation.mutateAsync(formData);
+    }
   };
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="animate-spin text-primary-600" size={32} />
+        <Loader2 className="animate-spin text-primary-600 dark:text-primary-400" size={32} />
       </div>
     );
   }
@@ -271,11 +65,11 @@ export default function EditArticlePage() {
     return (
       <div className="max-w-4xl mx-auto">
         <div className="card text-center py-12">
-          <AlertCircle className="mx-auto text-gray-400 mb-4" size={48} />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+          <AlertCircle className="mx-auto text-surface-400 dark:text-surface-500 mb-4" size={48} />
+          <h2 className="text-xl font-semibold text-surface-900 dark:text-white mb-2">
             Articolo non trovato
           </h2>
-          <p className="text-gray-600 mb-4">
+          <p className="text-surface-500 dark:text-surface-400 mb-4">
             L'articolo che stai cercando non esiste o è stato eliminato.
           </p>
           <Link to="/" className="btn-primary inline-block">
@@ -291,21 +85,21 @@ export default function EditArticlePage() {
       <div className="mb-6">
         <Link
           to="/"
-          className="inline-flex items-center space-x-2 text-gray-600 hover:text-gray-900 mb-4"
+          className="inline-flex items-center space-x-2 text-surface-500 dark:text-surface-400 hover:text-surface-700 dark:hover:text-surface-200 mb-4"
         >
           <ArrowLeft size={16} />
           <span>Torna alla Dashboard</span>
         </Link>
-        <h1 className="text-2xl font-bold text-gray-900">Modifica Articolo</h1>
-        <p className="text-gray-600 mt-1">
+        <h1 className="text-2xl font-bold text-surface-900 dark:text-white tracking-tight">Modifica Articolo</h1>
+        <p className="text-surface-500 dark:text-surface-400 mt-1">
           Modifica i dettagli dell'articolo
         </p>
       </div>
 
       {error && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start space-x-2">
-          <AlertCircle className="text-red-600 mt-0.5" size={20} />
-          <p className="text-sm text-red-800">{error}</p>
+        <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-xl flex items-start space-x-2">
+          <AlertCircle className="text-red-500 dark:text-red-400 mt-0.5" size={20} />
+          <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
         </div>
       )}
 
@@ -333,12 +127,12 @@ export default function EditArticlePage() {
                     tags: Array.isArray(data.data.tags) && data.data.tags.length > 0 && typeof data.data.tags[0] === 'object'
                       ? { data: (data.data.tags as unknown as Array<{ id: number }>).map(t => ({ id: t.id })) }
                       : Array.isArray(data.data.tags) && data.data.tags.length > 0 && typeof data.data.tags[0] === 'number'
-                      ? { data: (data.data.tags as number[]).map(id => ({ id })) }
+                      ? { data: (data.data.tags as number[]).map(tagId => ({ id: tagId })) }
                       : undefined,
                     partners: Array.isArray(data.data.partners) && data.data.partners.length > 0 && typeof data.data.partners[0] === 'object'
                       ? { data: (data.data.partners as unknown as Array<{ id: number }>).map(p => ({ id: p.id })) }
                       : Array.isArray(data.data.partners) && data.data.partners.length > 0 && typeof data.data.partners[0] === 'number'
-                      ? { data: (data.data.partners as number[]).map(id => ({ id })) }
+                      ? { data: (data.data.partners as number[]).map(pId => ({ id: pId })) }
                       : undefined,
                     seo: data.data.seo,
                   },
